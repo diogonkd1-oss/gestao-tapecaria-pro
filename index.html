@@ -4,138 +4,186 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gestão Tapeçaria Pro</title>
-  <script src="https://tailwindcss.com"></script>
-  <script src="https://jsdelivr.net"></script>
+  <script src="https://unpkg.com"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: #f1f5f9; color: #1e293b; line-height: 1.5; }
+    .hidden { display: none !important; }
+    
+    /* Login */
+    #login-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 16px; }
+    .login-card { background: #fff; padding: 32px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); width: 100%; max-width: 400px; }
+    .login-card h1 { font-size: 24px; color: #0f172a; margin-bottom: 4px; }
+    .login-card p { font-size: 14px; color: #64748b; margin-bottom: 24px; }
+    
+    /* Inputs e Botões */
+    .form-group { margin-bottom: 16px; }
+    label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #334155; }
+    input, select, textarea { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; background: #fff; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: #d97706; box-shadow: 0 0 0 3px rgba(217,119,6,0.15); }
+    
+    .btn { display: inline-block; padding: 10px 16px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; text-align: center; transition: 0.2s; }
+    .btn-primary { background: #d97706; color: #fff; width: 100%; }
+    .btn-primary:hover { background: #b45309; }
+    .btn-sm { padding: 6px 12px; font-size: 13px; width: auto; }
+    .btn-success { background: #059669; color: #fff; width: 100%; }
+    .btn-danger { background: #dc2626; color: #fff; width: 100%; }
+    .btn-dark { background: #1e293b; color: #fff; width: 100%; }
+    .btn-light { background: #e2e8f0; color: #1e293b; }
+    
+    /* Header e Navegação */
+    header { background: #0f172a; color: #fff; padding: 16px 24px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; }
+    header h1 { color: #fbbf24; font-size: 20px; }
+    header span { font-size: 12px; color: #cbd5e1; }
+    nav { display: flex; gap: 8px; flex-wrap: wrap; }
+    .nav-btn { background: #1e293b; color: #cbd5e1; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; }
+    .nav-btn.active { background: #d97706; color: #fff; }
+    
+    /* Layout Principal */
+    main { max-width: 1100px; margin: 24px auto; padding: 0 16px; display: flex; flex-direction: column; gap: 24px; }
+    .card { background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
+    .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+    
+    /* Alertas e Tabelas */
+    .alert-box { background: #fef2f2; border-left: 4px solid #ef4444; padding: 16px; border-radius: 8px; color: #991b1b; font-size: 14px; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
+    th { border-bottom: 2px solid #e2e8f0; padding: 12px 8px; font-size: 12px; text-transform: uppercase; color: #64748b; }
+    td { border-bottom: 1px solid #f1f5f9; padding: 12px 8px; }
+    .text-red { color: #dc2626; font-weight: bold; }
+    .text-green { color: #059669; font-weight: bold; }
+    
+    /* Modais */
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(15,23,42,0.65); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 50; overflow-y: auto; }
+    .modal-box { background: #fff; border-radius: 12px; width: 100%; max-width: 650px; padding: 24px; max-height: 90vh; overflow-y: auto; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 16px; }
+    .close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: #64748b; }
+    .photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-top: 12px; }
+    .photo-card { border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; text-align: center; font-size: 12px; font-weight: 600; }
+    .photo-card img { width: 100%; height: 120px; object-fit: cover; display: block; }
+  </style>
 </head>
-<body class="bg-slate-100 text-slate-800 font-sans">
+<body>
 
   <!-- TELA DE LOGIN -->
-  <div id="login-screen" class="min-h-screen flex items-center justify-center p-4">
-    <div class="bg-white p-8 rounded-xl shadow-md w-full max-w-md">
-      <h1 class="text-2xl font-bold text-slate-900 mb-2">Gestão Tapeçaria Pro</h1>
-      <p class="text-sm text-slate-500 mb-6">Acesse o painel da oficina</p>
-      
-      <form id="login-form" class="space-y-4">
-        <div>
-          <label class="block text-sm font-medium mb-1">E-mail</label>
-          <input type="email" id="email" required class="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-amber-500 outline-none">
+  <div id="login-screen">
+    <div class="login-card">
+      <h1>Gestão Tapeçaria Pro</h1>
+      <p>Acesse o painel da oficina</p>
+      <form id="login-form">
+        <div class="form-group">
+          <label>E-mail</label>
+          <input type="email" id="email" required>
         </div>
-        <div>
-          <label class="block text-sm font-medium mb-1">Senha</label>
-          <input type="password" id="password" required class="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-amber-500 outline-none">
+        <div class="form-group">
+          <label>Senha</label>
+          <input type="password" id="password" required>
         </div>
-        <button type="submit" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold py-2.5 rounded-lg transition">
-          Entrar no Sistema
-        </button>
+        <button type="submit" class="btn btn-primary">Entrar no Sistema</button>
       </form>
-      <p id="login-error" class="text-red-600 text-sm mt-3 hidden"></p>
+      <p id="login-error" class="text-red hidden" style="margin-top:12px; font-size:13px;"></p>
     </div>
   </div>
 
   <!-- PAINEL PRINCIPAL -->
-  <div id="dashboard-screen" class="hidden min-h-screen">
-    <header class="bg-slate-900 text-white px-6 py-4 flex flex-wrap justify-between items-center shadow gap-4">
-      <div class="flex flex-wrap items-center gap-6">
-        <div>
-          <h1 class="text-xl font-bold text-amber-400">Gestão Tapeçaria Pro</h1>
-          <span id="user-badge" class="text-xs text-slate-300">Carregando perfil...</span>
-        </div>
-        <nav class="flex gap-2">
-          <button onclick="switchTab('orders')" id="tab-orders" class="px-3 py-1.5 rounded text-sm font-medium bg-amber-600 text-white">Pedidos</button>
-          <button onclick="switchTab('stock')" id="tab-stock" class="px-3 py-1.5 rounded text-sm font-medium bg-slate-800 text-slate-300 hover:bg-slate-700">Estoque e Compras</button>
-          <button onclick="switchTab('finance')" id="tab-finance" class="owner-only hidden px-3 py-1.5 rounded text-sm font-medium bg-slate-800 text-slate-300 hover:bg-slate-700">Financeiro</button>
-        </nav>
+  <div id="dashboard-screen" class="hidden">
+    <header>
+      <div>
+        <h1>Gestão Tapeçaria Pro</h1>
+        <span id="user-badge">Carregando perfil...</span>
       </div>
-      <button onclick="logout()" class="text-sm bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded">Sair</button>
+      <nav>
+        <button onclick="switchTab('orders')" id="tab-orders" class="nav-btn active">Pedidos</button>
+        <button onclick="switchTab('stock')" id="tab-stock" class="nav-btn">Estoque e Compras</button>
+        <button onclick="switchTab('finance')" id="tab-finance" class="nav-btn owner-only hidden">Financeiro</button>
+        <button onclick="logout()" class="nav-btn" style="background:#334155;">Sair</button>
+      </nav>
     </header>
 
-    <main class="max-w-6xl mx-auto p-6 space-y-6">
-      <section id="stock-alerts-container" class="hidden bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg">
-        <h2 class="text-red-800 font-bold text-sm uppercase tracking-wide mb-2">⚠️ Alerta de Estoque Baixo</h2>
-        <ul id="stock-alerts-list" class="text-sm text-red-700 space-y-1"></ul>
-      </section>
+    <main>
+      <div id="stock-alerts-container" class="alert-box hidden">
+        <strong>⚠️ Alerta de Estoque Baixo</strong>
+        <ul id="stock-alerts-list" style="margin-top:6px; padding-left:18px;"></ul>
+      </div>
 
       <!-- ABA 1: PEDIDOS -->
-      <section id="view-orders" class="bg-white rounded-xl shadow p-6">
-        <div class="flex flex-wrap justify-between items-center mb-4 gap-3">
-          <h2 class="text-lg font-bold text-slate-800">Ordens de Serviço / Pedidos</h2>
-          <div class="flex items-center gap-3">
-            <button onclick="loadDashboardData()" class="text-sm text-slate-600 hover:underline">Atualizar</button>
-            <button onclick="openNewOrderModal()" class="owner-only hidden bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow-sm">
-              + Novo Pedido
-            </button>
+      <section id="view-orders" class="card">
+        <div class="card-header">
+          <h2>Ordens de Serviço / Pedidos</h2>
+          <div style="display:flex; gap:8px;">
+            <button onclick="loadDashboardData()" class="btn btn-sm btn-light">Atualizar</button>
+            <button onclick="openNewOrderModal()" class="btn btn-sm btn-primary owner-only hidden">+ Novo Pedido</button>
           </div>
         </div>
-
-        <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse">
+        <div class="table-wrap">
+          <table>
             <thead>
-              <tr class="border-b text-xs uppercase text-slate-500">
-                <th class="py-3 px-2">#</th>
-                <th class="py-3 px-2">Cliente</th>
-                <th class="py-3 px-2">Serviço</th>
-                <th class="py-3 px-2">Entrega</th>
-                <th class="py-3 px-2 owner-only hidden">Total / Pago</th>
-                <th class="py-3 px-2">Status</th>
-                <th class="py-3 px-2 text-right">Ações</th>
+              <tr>
+                <th>#</th>
+                <th>Cliente</th>
+                <th>Serviço</th>
+                <th>Entrega</th>
+                <th class="owner-only hidden">Total / Pago</th>
+                <th>Status</th>
+                <th>Ações</th>
               </tr>
             </thead>
-            <tbody id="orders-table-body" class="divide-y text-sm"></tbody>
+            <tbody id="orders-table-body"></tbody>
           </table>
         </div>
       </section>
 
-      <!-- ABA 2: ESTOQUE E COMPRAS -->
-      <section id="view-stock" class="hidden space-y-6">
-        <div class="grid md:grid-cols-2 gap-6 owner-only hidden">
-          <div class="bg-white rounded-xl shadow p-6">
-            <h3 class="text-md font-bold text-slate-800 mb-4">Registrar Compra / Entrada de Material</h3>
-            <form id="stock-entry-form" class="space-y-3 text-sm">
-              <div>
-                <label class="block font-medium mb-1">Material</label>
-                <select id="entry-material-id" required class="w-full border rounded-lg p-2 bg-white"></select>
+      <!-- ABA 2: ESTOQUE -->
+      <section id="view-stock" class="hidden" style="display:flex; flex-direction:column; gap:24px;">
+        <div class="grid-2 owner-only hidden">
+          <div class="card">
+            <h3 style="margin-bottom:14px;">Registrar Compra / Entrada</h3>
+            <form id="stock-entry-form">
+              <div class="form-group">
+                <label>Material</label>
+                <select id="entry-material-id" required></select>
               </div>
-              <div class="grid grid-cols-2 gap-3">
-                <div>
-                  <label class="block font-medium mb-1">Quantidade</label>
-                  <input type="number" step="0.01" min="0.01" id="entry-qty" required class="w-full border rounded-lg p-2">
+              <div class="grid-2">
+                <div class="form-group">
+                  <label>Quantidade</label>
+                  <input type="number" step="0.01" min="0.01" id="entry-qty" required>
                 </div>
-                <div>
-                  <label class="block font-medium mb-1">Custo Unitário (R$)</label>
-                  <input type="number" step="0.01" min="0" id="entry-cost" required class="w-full border rounded-lg p-2">
+                <div class="form-group">
+                  <label>Custo Unitário (R$)</label>
+                  <input type="number" step="0.01" min="0" id="entry-cost" required>
                 </div>
               </div>
-              <div>
-                <label class="block font-medium mb-1">Fornecedor / Nota</label>
-                <input type="text" id="entry-supplier" placeholder="Ex: Distribuidora Têxtil" class="w-full border rounded-lg p-2">
+              <div class="form-group">
+                <label>Fornecedor / Nota</label>
+                <input type="text" id="entry-supplier" placeholder="Ex: Distribuidora Têxtil">
               </div>
-              <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 rounded-lg">
-                Lançar Entrada no Estoque
-              </button>
+              <button type="submit" class="btn btn-success">Lançar Entrada no Estoque</button>
             </form>
           </div>
 
-          <div class="bg-white rounded-xl shadow p-6">
-            <h3 class="text-md font-bold text-slate-800 mb-4">Cadastrar Novo Tipo de Material</h3>
-            <form id="new-material-form" class="space-y-3 text-sm">
-              <div>
-                <label class="block font-medium mb-1">Nome do Material</label>
-                <input type="text" id="mat-name" placeholder="Ex: Suede Animale Bege" required class="w-full border rounded-lg p-2">
+          <div class="card">
+            <h3 style="margin-bottom:14px;">Cadastrar Novo Material</h3>
+            <form id="new-material-form">
+              <div class="form-group">
+                <label>Nome do Material</label>
+                <input type="text" id="mat-name" placeholder="Ex: Suede Animale Bege" required>
               </div>
-              <div class="grid grid-cols-2 gap-3">
-                <div>
-                  <label class="block font-medium mb-1">Categoria</label>
-                  <select id="mat-category" class="w-full border rounded-lg p-2 bg-white">
+              <div class="grid-2">
+                <div class="form-group">
+                  <label>Categoria</label>
+                  <select id="mat-category">
                     <option value="tecido">Tecido</option>
                     <option value="espuma">Espuma</option>
                     <option value="madeira">Madeira</option>
-                    <option value="ferragem">Ferragem / Grampo</option>
+                    <option value="ferragem">Ferragem</option>
                     <option value="outros">Outros</option>
                   </select>
                 </div>
-                <div>
-                  <label class="block font-medium mb-1">Unidade</label>
-                  <select id="mat-unit" class="w-full border rounded-lg p-2 bg-white">
+                <div class="form-group">
+                  <label>Unidade</label>
+                  <select id="mat-unit">
                     <option value="metro">Metro</option>
                     <option value="chapa">Chapa</option>
                     <option value="unidade">Unidade</option>
@@ -144,239 +192,4 @@
                   </select>
                 </div>
               </div>
-              <div>
-                <label class="block font-medium mb-1">Estoque Mínimo para Alerta</label>
-                <input type="number" step="0.01" min="0" id="mat-min-alert" value="5" required class="w-full border rounded-lg p-2">
-              </div>
-              <button type="submit" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold py-2 rounded-lg">
-                Criar Material
-              </button>
-            </form>
-          </div>
-        </div>
-
-        <div class="bg-white rounded-xl shadow p-6">
-          <h3 class="text-lg font-bold text-slate-800 mb-4">Saldo Atual do Estoque</h3>
-          <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
-              <thead>
-                <tr class="border-b text-xs uppercase text-slate-500">
-                  <th class="py-3 px-2">Material</th>
-                  <th class="py-3 px-2">Categoria</th>
-                  <th class="py-3 px-2">Saldo Atual</th>
-                  <th class="py-3 px-2">Mínimo</th>
-                  <th class="py-3 px-2 owner-only hidden">Custo Unit.</th>
-                </tr>
-              </thead>
-              <tbody id="materials-table-body" class="divide-y text-sm"></tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <!-- ABA 3: FINANCEIRO -->
-      <section id="view-finance" class="hidden space-y-6">
-        <div class="grid md:grid-cols-3 gap-4">
-          <div class="bg-white p-5 rounded-xl shadow border-l-4 border-emerald-500">
-            <span class="text-xs uppercase text-slate-500 font-semibold">Total de Entradas</span>
-            <p id="fin-total-income" class="text-2xl font-bold text-emerald-600 mt-1">R$ 0,00</p>
-          </div>
-          <div class="bg-white p-5 rounded-xl shadow border-l-4 border-red-500">
-            <span class="text-xs uppercase text-slate-500 font-semibold">Total de Saídas / Compras</span>
-            <p id="fin-total-expense" class="text-2xl font-bold text-red-600 mt-1">R$ 0,00</p>
-          </div>
-          <div class="bg-white p-5 rounded-xl shadow border-l-4 border-amber-500">
-              <!-- MODAL: NOVO PEDIDO -->
-  <div id="new-order-modal" class="hidden fixed inset-0 bg-slate-900/60 flex items-center justify-center p-4 z-50 overflow-y-auto">
-    <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl p-6 my-8">
-      <div class="flex justify-between items-center border-b pb-3 mb-4">
-        <h3 class="text-lg font-bold text-slate-900">Abrir Nova Ordem de Serviço</h3>
-        <button onclick="closeNewOrderModal()" class="text-slate-400 hover:text-slate-700 text-xl font-bold">&times;</button>
-      </div>
-
-      <form id="new-order-form" class="space-y-4 text-sm">
-        <div class="bg-slate-50 p-3 rounded-lg border space-y-3">
-          <div class="flex justify-between items-center">
-            <label class="font-semibold text-slate-700">Dados do Cliente</label>
-            <label class="text-xs flex items-center gap-1 cursor-pointer">
-              <input type="checkbox" id="is-new-customer" onchange="toggleCustomerMode()"> Novo cliente
-            </label>
-          </div>
-          <div id="existing-customer-box">
-            <select id="order-customer-select" class="w-full border rounded-lg p-2 bg-white"></select>
-          </div>
-          <div id="new-customer-box" class="hidden grid grid-cols-2 gap-3">
-            <input type="text" id="new-cust-name" placeholder="Nome completo *" class="border rounded-lg p-2">
-            <input type="text" id="new-cust-phone" placeholder="Telefone / WhatsApp" class="border rounded-lg p-2">
-          </div>
-        </div>
-
-        <div class="grid md:grid-cols-3 gap-3">
-          <div class="md:col-span-2">
-            <label class="block font-medium mb-1">Descrição do Serviço *</label>
-            <input type="text" id="order-desc" placeholder="Ex: Reforma Sofá 3 Lugares Retrátil" required class="w-full border rounded-lg p-2">
-          </div>
-          <div>
-            <label class="block font-medium mb-1">Previsão de Entrega</label>
-            <input type="date" id="order-due-date" class="w-full border rounded-lg p-2">
-          </div>
-        </div>
-
-        <div>
-          <label class="block font-medium mb-1">Detalhes Técnicos / Acabamento</label>
-          <textarea id="order-details" rows="2" placeholder="Costura pespontada, troca de percintas, etc." class="w-full border rounded-lg p-2"></textarea>
-        </div>
-
-        <div class="border-t pt-3">
-          <div class="flex justify-between items-center mb-2">
-            <label class="font-semibold text-slate-700">Materiais Utilizados (Baixa no Estoque)</label>
-            <button type="button" onclick="addMaterialRow()" class="text-xs bg-slate-200 hover:bg-slate-300 px-2.5 py-1 rounded font-medium">
-              + Adicionar Material
-            </button>
-          </div>
-          <div id="order-materials-list" class="space-y-2"></div>
-        </div>
-
-        <div class="grid grid-cols-3 gap-3 border-t pt-3">
-          <div>
-            <label class="block font-medium mb-1">Status Inicial</label>
-            <select id="order-status" class="w-full border rounded-lg p-2 bg-white">
-              <option value="pending">Pendente (Aprovado)</option>
-              <option value="in_progress">Em Produção</option>
-              <option value="quote">Apenas Orçamento</option>
-            </select>
-          </div>
-          <div>
-            <label class="block font-medium mb-1">Valor Total (R$) *</label>
-            <input type="number" step="0.01" min="0" id="order-total-price" required class="w-full border rounded-lg p-2">
-          </div>
-          <div>
-            <label class="block font-medium mb-1">Sinal Pago Agora (R$)</label>
-            <input type="number" step="0.01" min="0" id="order-deposit" value="0" class="w-full border rounded-lg p-2">
-          </div>
-        </div>
-
-        <div class="flex justify-end gap-3 pt-4 border-t">
-          <button type="button" onclick="closeNewOrderModal()" class="px-4 py-2 rounded-lg border text-slate-600 hover:bg-slate-50">Cancelar</button>
-          <button type="submit" id="save-order-btn" class="px-5 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-semibold">
-            Salvar Pedido
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- MODAL: DETALHES E FOTOS DO PEDIDO -->
-  <div id="order-details-modal" class="hidden fixed inset-0 bg-slate-900/60 flex items-center justify-center p-4 z-50 overflow-y-auto">
-    <div class="bg-white rounded-xl shadow-xl w-full max-w-3xl p-6 my-8 space-y-5">
-      <div class="flex justify-between items-start border-b pb-3">
-        <div>
-          <h3 id="det-title" class="text-lg font-bold text-slate-900">Pedido #</h3>
-          <p id="det-subtitle" class="text-sm text-slate-500"></p>
-        </div>
-        <button onclick="closeOrderDetailsModal()" class="text-slate-400 hover:text-slate-700 text-xl font-bold">&times;</button>
-      </div>
-
-      <div class="bg-slate-50 p-3 rounded-lg text-sm">
-        <span class="font-semibold text-slate-700 block mb-1">Observações Técnicas:</span>
-        <p id="det-notes" class="text-slate-600">Sem observações adicionais.</p>
-      </div>
-
-      <div id="det-payment-box" class="owner-only hidden bg-emerald-50 border border-emerald-200 p-4 rounded-lg space-y-3">
-        <div class="flex flex-wrap justify-between items-center text-sm">
-          <span>Total: <strong id="det-total-price">R$ 0,00</strong></span>
-          <span>Pago: <strong id="det-total-paid" class="text-emerald-700">R$ 0,00</strong></span>
-          <span>Restante: <strong id="det-balance-due" class="text-red-600">R$ 0,00</strong></span>
-        </div>
-        <form id="add-payment-form" class="flex flex-wrap gap-2 items-center pt-2 border-t border-emerald-200 text-sm">
-          <input type="number" step="0.01" min="0.01" id="pay-amount" placeholder="Valor recebido (R$)" required class="border rounded-lg p-2 bg-white w-44">
-          <select id="pay-method" class="border rounded-lg p-2 bg-white">
-            <option value="pix">PIX</option>
-            <option value="dinheiro">Dinheiro</option>
-            <option value="cartao_credito">Cartão Crédito</option>
-            <option value="cartao_debito">Cartão Débito</option>
-          </select>
-          <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2 rounded-lg">
-            Registrar Pagamento
-          </button>
-        </form>
-      </div>
-
-      <div class="space-y-3 border-t pt-4">
-        <h4 class="font-bold text-slate-800 text-sm">Fotos do Serviço (Antes e Depois)</h4>
-        
-        <form id="upload-photo-form" class="flex flex-wrap gap-2 items-center bg-slate-50 p-3 rounded-lg border text-sm">
-          <select id="photo-stage" class="border rounded-lg p-2 bg-white">
-            <option value="before">Antes (Entrada)</option>
-            <option value="in_progress">Em Produção</option>
-            <option value="after">Depois (Pronto)</option>
-          </select>
-          <input type="file" id="photo-file" accept="image/*" required class="text-xs flex-1">
-          <button type="submit" id="upload-photo-btn" class="bg-slate-800 hover:bg-slate-900 text-white font-semibold px-4 py-2 rounded-lg">
-            Enviar Foto
-          </button>
-        </form>
-
-        <div id="order-photos-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2"></div>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    const SUPABASE_URL = 'https://supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNjdHVzcGhoZmxxYWNmd2tua2F3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUwMTIyMTgsImV4cCI6MjExMDU4ODIxOH0.GufPhKrvpMMahQsvmd57QjUBW3wfOlan088t06O3uE8';
-    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    let currentUserRole = 'employee';
-    let cachedMaterials = [];
-    let cachedCustomers = [];
-    let cachedOrders = [];
-    let activeOrderId = null;
-
-    sb.auth.onAuthStateChange((event, session) => {
-      if (session) {
-        document.getElementById('login-screen').classList.add('hidden');
-        document.getElementById('dashboard-screen').classList.remove('hidden');
-        initDashboard(session.user.id);
-      } else {
-        document.getElementById('login-screen').classList.remove('hidden');
-        document.getElementById('dashboard-screen').classList.add('hidden');
-      }
-    });
-
-    document.getElementById('login-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      const { error } = await sb.auth.signInWithPassword({ email, password });
-      if (error) {
-        const errorEl = document.getElementById('login-error');
-        errorEl.textContent = 'Erro ao entrar: ' + error.message;
-        errorEl.classList.remove('hidden');
-      }
-    });
-
-    async function logout() {
-      await sb.auth.signOut();
-    }
-
-    function switchTab(tab) {
-      ['orders', 'stock', 'finance'].forEach(t => {
-        const isCurrent = t === tab;
-        document.getElementById(`view-${t}`).classList.toggle('hidden', !isCurrent);
-        const btn = document.getElementById(`tab-${t}`);
-        if (btn) {
-          btn.className = isCurrent
-            ? 'px-3 py-1.5 rounded text-sm font-medium bg-amber-600 text-white'
-            : (t === 'finance' && currentUserRole !== 'owner' ? 'hidden ' : '') + 'px-3 py-1.5 rounded text-sm font-medium bg-slate-800 text-slate-300 hover:bg-slate-700';
-        }
-      });
-      if (tab === 'finance') loadFinanceData();
-    }
-
-    async function initDashboard(userId) {
-      const { data: profile } = await sb.from('profiles').select('*').eq('id', userId).single();
-      if (profile) {
-        currentUserRole = profile.role;
-        document.getElementById('user-badge').textContent = `${profile.full_name} (${profile.role === 'owner' ? 'Proprietário' : 'Funcionário'})`;
-
+              <div class="form-group">
