@@ -50,7 +50,6 @@
     </header>
 
     <main class="max-w-6xl mx-auto p-6 space-y-6">
-      <!-- ALERTAS DE ESTOQUE -->
       <section id="stock-alerts-container" class="hidden bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg">
         <h2 class="text-red-800 font-bold text-sm uppercase tracking-wide mb-2">⚠️ Alerta de Estoque Baixo</h2>
         <ul id="stock-alerts-list" class="text-sm text-red-700 space-y-1"></ul>
@@ -89,7 +88,6 @@
       <!-- ABA 2: ESTOQUE E COMPRAS -->
       <section id="view-stock" class="hidden space-y-6">
         <div class="grid md:grid-cols-2 gap-6 owner-only hidden">
-          <!-- Registrar Compra (Entrada) -->
           <div class="bg-white rounded-xl shadow p-6">
             <h3 class="text-md font-bold text-slate-800 mb-4">Registrar Compra / Entrada de Material</h3>
             <form id="stock-entry-form" class="space-y-3 text-sm">
@@ -117,7 +115,6 @@
             </form>
           </div>
 
-          <!-- Cadastrar Novo Insumo -->
           <div class="bg-white rounded-xl shadow p-6">
             <h3 class="text-md font-bold text-slate-800 mb-4">Cadastrar Novo Tipo de Material</h3>
             <form id="new-material-form" class="space-y-3 text-sm">
@@ -158,7 +155,6 @@
           </div>
         </div>
 
-        <!-- Tabela de Saldo Atual -->
         <div class="bg-white rounded-xl shadow p-6">
           <h3 class="text-lg font-bold text-slate-800 mb-4">Saldo Atual do Estoque</h3>
           <div class="overflow-x-auto">
@@ -178,7 +174,7 @@
         </div>
       </section>
 
-      <!-- ABA 3: FINANCEIRO (EXCLUSIVA PROPRIETÁRIO) -->
+      <!-- ABA 3: FINANCEIRO -->
       <section id="view-finance" class="hidden space-y-6">
         <div class="grid md:grid-cols-3 gap-4">
           <div class="bg-white p-5 rounded-xl shadow border-l-4 border-emerald-500">
@@ -187,3 +183,200 @@
           </div>
           <div class="bg-white p-5 rounded-xl shadow border-l-4 border-red-500">
             <span class="text-xs uppercase text-slate-500 font-semibold">Total de Saídas / Compras</span>
+            <p id="fin-total-expense" class="text-2xl font-bold text-red-600 mt-1">R$ 0,00</p>
+          </div>
+          <div class="bg-white p-5 rounded-xl shadow border-l-4 border-amber-500">
+              <!-- MODAL: NOVO PEDIDO -->
+  <div id="new-order-modal" class="hidden fixed inset-0 bg-slate-900/60 flex items-center justify-center p-4 z-50 overflow-y-auto">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl p-6 my-8">
+      <div class="flex justify-between items-center border-b pb-3 mb-4">
+        <h3 class="text-lg font-bold text-slate-900">Abrir Nova Ordem de Serviço</h3>
+        <button onclick="closeNewOrderModal()" class="text-slate-400 hover:text-slate-700 text-xl font-bold">&times;</button>
+      </div>
+
+      <form id="new-order-form" class="space-y-4 text-sm">
+        <div class="bg-slate-50 p-3 rounded-lg border space-y-3">
+          <div class="flex justify-between items-center">
+            <label class="font-semibold text-slate-700">Dados do Cliente</label>
+            <label class="text-xs flex items-center gap-1 cursor-pointer">
+              <input type="checkbox" id="is-new-customer" onchange="toggleCustomerMode()"> Novo cliente
+            </label>
+          </div>
+          <div id="existing-customer-box">
+            <select id="order-customer-select" class="w-full border rounded-lg p-2 bg-white"></select>
+          </div>
+          <div id="new-customer-box" class="hidden grid grid-cols-2 gap-3">
+            <input type="text" id="new-cust-name" placeholder="Nome completo *" class="border rounded-lg p-2">
+            <input type="text" id="new-cust-phone" placeholder="Telefone / WhatsApp" class="border rounded-lg p-2">
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-3">
+          <div class="md:col-span-2">
+            <label class="block font-medium mb-1">Descrição do Serviço *</label>
+            <input type="text" id="order-desc" placeholder="Ex: Reforma Sofá 3 Lugares Retrátil" required class="w-full border rounded-lg p-2">
+          </div>
+          <div>
+            <label class="block font-medium mb-1">Previsão de Entrega</label>
+            <input type="date" id="order-due-date" class="w-full border rounded-lg p-2">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-medium mb-1">Detalhes Técnicos / Acabamento</label>
+          <textarea id="order-details" rows="2" placeholder="Costura pespontada, troca de percintas, etc." class="w-full border rounded-lg p-2"></textarea>
+        </div>
+
+        <div class="border-t pt-3">
+          <div class="flex justify-between items-center mb-2">
+            <label class="font-semibold text-slate-700">Materiais Utilizados (Baixa no Estoque)</label>
+            <button type="button" onclick="addMaterialRow()" class="text-xs bg-slate-200 hover:bg-slate-300 px-2.5 py-1 rounded font-medium">
+              + Adicionar Material
+            </button>
+          </div>
+          <div id="order-materials-list" class="space-y-2"></div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-3 border-t pt-3">
+          <div>
+            <label class="block font-medium mb-1">Status Inicial</label>
+            <select id="order-status" class="w-full border rounded-lg p-2 bg-white">
+              <option value="pending">Pendente (Aprovado)</option>
+              <option value="in_progress">Em Produção</option>
+              <option value="quote">Apenas Orçamento</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-medium mb-1">Valor Total (R$) *</label>
+            <input type="number" step="0.01" min="0" id="order-total-price" required class="w-full border rounded-lg p-2">
+          </div>
+          <div>
+            <label class="block font-medium mb-1">Sinal Pago Agora (R$)</label>
+            <input type="number" step="0.01" min="0" id="order-deposit" value="0" class="w-full border rounded-lg p-2">
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-3 pt-4 border-t">
+          <button type="button" onclick="closeNewOrderModal()" class="px-4 py-2 rounded-lg border text-slate-600 hover:bg-slate-50">Cancelar</button>
+          <button type="submit" id="save-order-btn" class="px-5 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-semibold">
+            Salvar Pedido
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: DETALHES E FOTOS DO PEDIDO -->
+  <div id="order-details-modal" class="hidden fixed inset-0 bg-slate-900/60 flex items-center justify-center p-4 z-50 overflow-y-auto">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-3xl p-6 my-8 space-y-5">
+      <div class="flex justify-between items-start border-b pb-3">
+        <div>
+          <h3 id="det-title" class="text-lg font-bold text-slate-900">Pedido #</h3>
+          <p id="det-subtitle" class="text-sm text-slate-500"></p>
+        </div>
+        <button onclick="closeOrderDetailsModal()" class="text-slate-400 hover:text-slate-700 text-xl font-bold">&times;</button>
+      </div>
+
+      <div class="bg-slate-50 p-3 rounded-lg text-sm">
+        <span class="font-semibold text-slate-700 block mb-1">Observações Técnicas:</span>
+        <p id="det-notes" class="text-slate-600">Sem observações adicionais.</p>
+      </div>
+
+      <div id="det-payment-box" class="owner-only hidden bg-emerald-50 border border-emerald-200 p-4 rounded-lg space-y-3">
+        <div class="flex flex-wrap justify-between items-center text-sm">
+          <span>Total: <strong id="det-total-price">R$ 0,00</strong></span>
+          <span>Pago: <strong id="det-total-paid" class="text-emerald-700">R$ 0,00</strong></span>
+          <span>Restante: <strong id="det-balance-due" class="text-red-600">R$ 0,00</strong></span>
+        </div>
+        <form id="add-payment-form" class="flex flex-wrap gap-2 items-center pt-2 border-t border-emerald-200 text-sm">
+          <input type="number" step="0.01" min="0.01" id="pay-amount" placeholder="Valor recebido (R$)" required class="border rounded-lg p-2 bg-white w-44">
+          <select id="pay-method" class="border rounded-lg p-2 bg-white">
+            <option value="pix">PIX</option>
+            <option value="dinheiro">Dinheiro</option>
+            <option value="cartao_credito">Cartão Crédito</option>
+            <option value="cartao_debito">Cartão Débito</option>
+          </select>
+          <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2 rounded-lg">
+            Registrar Pagamento
+          </button>
+        </form>
+      </div>
+
+      <div class="space-y-3 border-t pt-4">
+        <h4 class="font-bold text-slate-800 text-sm">Fotos do Serviço (Antes e Depois)</h4>
+        
+        <form id="upload-photo-form" class="flex flex-wrap gap-2 items-center bg-slate-50 p-3 rounded-lg border text-sm">
+          <select id="photo-stage" class="border rounded-lg p-2 bg-white">
+            <option value="before">Antes (Entrada)</option>
+            <option value="in_progress">Em Produção</option>
+            <option value="after">Depois (Pronto)</option>
+          </select>
+          <input type="file" id="photo-file" accept="image/*" required class="text-xs flex-1">
+          <button type="submit" id="upload-photo-btn" class="bg-slate-800 hover:bg-slate-900 text-white font-semibold px-4 py-2 rounded-lg">
+            Enviar Foto
+          </button>
+        </form>
+
+        <div id="order-photos-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNjdHVzcGhoZmxxYWNmd2tua2F3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUwMTIyMTgsImV4cCI6MjExMDU4ODIxOH0.GufPhKrvpMMahQsvmd57QjUBW3wfOlan088t06O3uE8';
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let currentUserRole = 'employee';
+    let cachedMaterials = [];
+    let cachedCustomers = [];
+    let cachedOrders = [];
+    let activeOrderId = null;
+
+    sb.auth.onAuthStateChange((event, session) => {
+      if (session) {
+        document.getElementById('login-screen').classList.add('hidden');
+        document.getElementById('dashboard-screen').classList.remove('hidden');
+        initDashboard(session.user.id);
+      } else {
+        document.getElementById('login-screen').classList.remove('hidden');
+        document.getElementById('dashboard-screen').classList.add('hidden');
+      }
+    });
+
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const { error } = await sb.auth.signInWithPassword({ email, password });
+      if (error) {
+        const errorEl = document.getElementById('login-error');
+        errorEl.textContent = 'Erro ao entrar: ' + error.message;
+        errorEl.classList.remove('hidden');
+      }
+    });
+
+    async function logout() {
+      await sb.auth.signOut();
+    }
+
+    function switchTab(tab) {
+      ['orders', 'stock', 'finance'].forEach(t => {
+        const isCurrent = t === tab;
+        document.getElementById(`view-${t}`).classList.toggle('hidden', !isCurrent);
+        const btn = document.getElementById(`tab-${t}`);
+        if (btn) {
+          btn.className = isCurrent
+            ? 'px-3 py-1.5 rounded text-sm font-medium bg-amber-600 text-white'
+            : (t === 'finance' && currentUserRole !== 'owner' ? 'hidden ' : '') + 'px-3 py-1.5 rounded text-sm font-medium bg-slate-800 text-slate-300 hover:bg-slate-700';
+        }
+      });
+      if (tab === 'finance') loadFinanceData();
+    }
+
+    async function initDashboard(userId) {
+      const { data: profile } = await sb.from('profiles').select('*').eq('id', userId).single();
+      if (profile) {
+        currentUserRole = profile.role;
+        document.getElementById('user-badge').textContent = `${profile.full_name} (${profile.role === 'owner' ? 'Proprietário' : 'Funcionário'})`;
+
