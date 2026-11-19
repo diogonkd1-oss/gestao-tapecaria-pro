@@ -22,9 +22,10 @@
   <div id="print-receipt-area" class="hidden print:block text-slate-900">
     <div class="border-b-2 border-slate-800 pb-4 mb-6 flex justify-between items-center">
       <div>
-        <h1 class="text-2xl font-bold uppercase">Ordem de Serviço / Comprovante</h1>
-        <p class="text-sm text-slate-600">Gestão Tapeçaria Pro - Estofados e Reformas</p>
-      </div>
+               <h1 class="text-2xl font-bold uppercase">NOME DA SUA TAPEÇARIA</h1>
+        <p class="text-sm text-slate-600">Ordem de Serviço / Comprovante • Tel/WhatsApp: (62) 99999-9999</p>
+        <p class="text-xs text-slate-500">Endereço Completo da Oficina - Anápolis/GO</p>
+
       <div class="text-right">
         <p id="print-order-num" class="text-xl font-bold font-mono">#000</p>
         <p id="print-date" class="text-xs text-slate-500"></p>
@@ -258,7 +259,9 @@
       <div class="flex flex-wrap justify-between items-start border-b pb-3 gap-2">
         <div><h3 id="det-title" class="text-lg font-bold text-slate-900">Pedido #</h3><p id="det-subtitle" class="text-sm text-slate-500"></p></div>
         <div class="flex items-center gap-3">
-                    <button type="button" onclick="toggleEditOrder()" class="owner-only hidden bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold px-3 py-2 rounded-lg">✏️ Editar</button>
+                   <button type="button" onclick="deleteActiveOrder()" class="owner-only hidden bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-3 py-2 rounded-lg">🗑️ Excluir</button>
+          
+          <button type="button" onclick="toggleEditOrder()" class="owner-only hidden bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold px-3 py-2 rounded-lg">✏️ Editar</button>
 <button type="button" onclick="printOrderReceipt()" class="bg-slate-800 text-white text-xs font-semibold px-3 py-2 rounded-lg">🖨️ Imprimir / PDF</button>
           <button onclick="closeOrderDetailsModal()" class="text-slate-400 text-xl font-bold px-1">&times;</button>
         </div>
@@ -564,6 +567,15 @@ if (expDateEl) expDateEl.valueAsDate = new Date();
       await loadDashboardData();
       openOrderDetails(activeOrderId);
     });
+        async function deleteActiveOrder() {
+      if (!activeOrderId) return;
+      if (!confirm('Tem certeza que deseja excluir este pedido permanentemente?')) return;
+      const { error } = await sb.from('manufacturing_orders').delete().eq('id', activeOrderId);
+      if (error) return alert('Erro ao excluir: ' + error.message);
+      closeOrderDetailsModal();
+      loadDashboardData();
+    }
+
 </script>
 </body>
 </html>
