@@ -475,7 +475,8 @@ if (expDateEl) expDateEl.valueAsDate = new Date();
       }).join('');
       document.getElementById('fin-total-income').textContent = `${formatBRL(inc)}`;
       document.getElementById('fin-total-expense').textContent = `${formatBRL(exp)}`;
-      document.getElementById('fin-net-balance').textContent = `R$ ${(inc - exp)}`;
+            document.getElementById('fin-net-balance').textContent = `${formatBRL(inc - exp)}`;
+
     }
 
     document.getElementById('expense-form')?.addEventListener('submit', async (e) => {
