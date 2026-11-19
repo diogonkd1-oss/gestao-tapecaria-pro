@@ -1,1 +1,15 @@
-
+{
+  "name": "Gestão Tapeçaria Pro",
+  "short_name": "Tapeçaria Pro",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#d97706",
+  "icons": [
+    {
+      "src": "https://flaticon.com",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
