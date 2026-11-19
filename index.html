@@ -311,6 +311,9 @@
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let currentUserRole = 'employee', cachedMaterials = [], cachedCustomers = [], cachedOrders = [], activeOrderId = null, activeOrderFull = null;
+    function formatBRL(val) {
+      return Number(val || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
 
     sb.auth.onAuthStateChange((event, session) => {
       if (session) {
@@ -373,12 +376,12 @@ if (expDateEl) expDateEl.valueAsDate = new Date();
       cachedOrders = orders || [];
       document.getElementById('orders-table-body').innerHTML = cachedOrders.map(o => {
         const id = o.order_id || o.id;
-        return `<tr class="hover:bg-slate-50"><td class="py-3 px-2 font-mono text-xs">#${o.order_number}</td><td class="py-3 px-2 font-medium">${o.customer_name}</td><td class="py-3 px-2">${o.product_description}</td><td class="py-3 px-2">${o.due_date || '-'}</td>${currentUserRole === 'owner' ? `<td class="py-3 px-2"><span class="font-semibold">R$ ${Number(o.total_price).toFixed(2)}</span><span class="block text-xs text-green-600">Pago: R$ ${Number(o.total_paid).toFixed(2)}</span></td>` : ''}<td class="py-3 px-2"><select onchange="updateOrderStatus('${id}', this.value)" class="border rounded px-2 py-1 text-xs bg-white"><option value="quote" ${o.status==='quote'?'selected':''}>Orçamento</option><option value="pending" ${o.status==='pending'?'selected':''}>Pendente</option><option value="in_progress" ${o.status==='in_progress'?'selected':''}>Em Produção</option><option value="completed" ${o.status==='completed'?'selected':''}>Concluído</option><option value="cancelled" ${o.status==='cancelled'?'selected':''}>Cancelado</option></select></td><td class="py-3 px-2 text-right"><button onclick="openOrderDetails('${id}')" class="text-xs bg-slate-200 px-2.5 py-1.5 rounded font-medium">Detalhes / PDF</button></td></tr>`;
+        return `<tr class="hover:bg-slate-50"><td class="py-3 px-2 font-mono text-xs">#${o.order_number}</td><td class="py-3 px-2 font-medium">${o.customer_name}</td><td class="py-3 px-2">${o.product_description}</td><td class="py-3 px-2">${o.due_date || '-'}</td>${currentUserRole === 'owner' ? `<td class="py-3 px-2"><span class="font-semibold">${formatBRL(o.total_price)}</span><span class="block text-xs text-green-600">Pago: ${formatBRL(o.total_paid)}</span></td>` : ''}<td class="py-3 px-2"><select onchange="updateOrderStatus('${id}', this.value)" class="border rounded px-2 py-1 text-xs bg-white"><option value="quote" ${o.status==='quote'?'selected':''}>Orçamento</option><option value="pending" ${o.status==='pending'?'selected':''}>Pendente</option><option value="in_progress" ${o.status==='in_progress'?'selected':''}>Em Produção</option><option value="completed" ${o.status==='completed'?'selected':''}>Concluído</option><option value="cancelled" ${o.status==='cancelled'?'selected':''}>Cancelado</option></select></td><td class="py-3 px-2 text-right"><button onclick="openOrderDetails('${id}')" class="text-xs bg-slate-200 px-2.5 py-1.5 rounded font-medium">Detalhes / PDF</button></td></tr>`;
       }).join('');
 
       const { data: materials } = await sb.from('materials').select('*').order('name');
       cachedMaterials = materials || [];
-      document.getElementById('materials-table-body').innerHTML = cachedMaterials.map(m => `<tr><td class="py-3 px-2 font-medium">${m.name}</td><td class="py-3 px-2 capitalize">${m.category}</td><td class="py-3 px-2 font-semibold ${m.stock_quantity<=m.min_stock_alert?'text-red-600':''}">${m.stock_quantity} ${m.unit}(s)</td><td class="py-3 px-2">${m.min_stock_alert}</td>${currentUserRole==='owner'?`<td class="py-3 px-2">R$ ${Number(m.unit_cost).toFixed(2)}</td>`:''}</tr>`).join('');
+      document.getElementById('materials-table-body').innerHTML = cachedMaterials.map(m => `<tr><td class="py-3 px-2 font-medium">${m.name}</td><td class="py-3 px-2 capitalize">${m.category}</td><td class="py-3 px-2 font-semibold ${m.stock_quantity<=m.min_stock_alert?'text-red-600':''}">${m.stock_quantity} ${m.unit}(s)</td><td class="py-3 px-2">${m.min_stock_alert}</td>${currentUserRole==='owner'?`<td class="py-3 px-2">${formatBRL(m.unit_cost)}</td>`:''}</tr>`).join('');
       const matSelect = document.getElementById('entry-material-id');
       if (matSelect) matSelect.innerHTML = cachedMaterials.map(m => `<option value="${m.id}">${m.name} (${m.unit})</option>`).join('');
 
@@ -401,9 +404,9 @@ if (expDateEl) expDateEl.valueAsDate = new Date();
       document.getElementById('det-subtitle').textContent = fullOrder.product_description;
       document.getElementById('det-notes').textContent = fullOrder.details || 'Sem observações.';
       if (currentUserRole === 'owner' && summary) {
-        document.getElementById('det-total-price').textContent = `R$ ${Number(summary.total_price).toFixed(2)}`;
-        document.getElementById('det-total-paid').textContent = `R$ ${Number(summary.total_paid).toFixed(2)}`;
-        document.getElementById('det-balance-due').textContent = `R$ ${Number(summary.balance_due).toFixed(2)}`;
+        document.getElementById('det-total-price').textContent = `${formatBRL(summary.total_price)}`;
+        document.getElementById('det-total-paid').textContent = `${formatBRL(summary.total_paid)}`;
+        document.getElementById('det-balance-due').textContent = `${formatBRL(summary.balance_due)}`;
       }
       document.getElementById('order-details-modal').classList.remove('hidden');
       loadOrderPhotos(id);
@@ -420,9 +423,9 @@ if (expDateEl) expDateEl.valueAsDate = new Date();
       document.getElementById('print-details').textContent = activeOrderFull.details || 'Conforme combinado.';
       if (currentUserRole === 'owner' && summary) {
         document.getElementById('print-finance-box').classList.remove('hidden');
-        document.getElementById('print-total').textContent = `R$ ${Number(summary.total_price).toFixed(2)}`;
-        document.getElementById('print-paid').textContent = `R$ ${Number(summary.total_paid).toFixed(2)}`;
-        document.getElementById('print-balance').textContent = `R$ ${Number(summary.balance_due).toFixed(2)}`;
+        document.getElementById('print-total').textContent = `${formatBRL(summary.total_price)}`;
+        document.getElementById('print-paid').textContent = `${formatBRL(summary.total_paid)}`;
+        document.getElementById('print-balance').textContent = `${formatBRL(summary.balance_due)}`;
       } else { document.getElementById('print-finance-box').classList.add('hidden'); }
       window.print();
     }
@@ -468,11 +471,11 @@ if (expDateEl) expDateEl.valueAsDate = new Date();
       let inc = 0, exp = 0;
       document.getElementById('finance-table-body').innerHTML = (txs || []).map(t => {
         const v = Number(t.amount); if (t.type === 'income') inc += v; else exp += v;
-        return `<tr><td class="py-2 px-2">${t.transaction_date}</td><td class="py-2 px-2">${t.description}</td><td class="py-2 px-2">${t.category}</td><td class="py-2 px-2 text-right font-semibold ${t.type==='income'?'text-emerald-600':'text-red-600'}">R$ ${v.toFixed(2)}</td></tr>`;
+        return `<tr><td class="py-2 px-2">${t.transaction_date}</td><td class="py-2 px-2">${t.description}</td><td class="py-2 px-2">${t.category}</td><td class="py-2 px-2 text-right font-semibold ${t.type==='income'?'text-emerald-600':'text-red-600'}">${formatBRL(v)}</td></tr>`;
       }).join('');
-      document.getElementById('fin-total-income').textContent = `R$ ${inc.toFixed(2)}`;
-      document.getElementById('fin-total-expense').textContent = `R$ ${exp.toFixed(2)}`;
-      document.getElementById('fin-net-balance').textContent = `R$ ${(inc - exp).toFixed(2)}`;
+      document.getElementById('fin-total-income').textContent = `${formatBRL(inc)}`;
+      document.getElementById('fin-total-expense').textContent = `${formatBRL(exp)}`;
+      document.getElementById('fin-net-balance').textContent = `R$ ${(inc - exp)}`;
     }
 
     document.getElementById('expense-form')?.addEventListener('submit', async (e) => {
