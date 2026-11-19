@@ -272,7 +272,9 @@
         document.getElementById('user-badge').textContent = `${profile.full_name} (${profile.role === 'owner' ? 'Proprietário' : 'Funcionário'})`;
         if (currentUserRole === 'owner') document.querySelectorAll('.owner-only').forEach(el => el.classList.remove('hidden'));
       }
-      document.getElementById('exp-date').valueAsDate = new Date();
+      const expDateEl = document.getElementById('exp-date');
+if (expDateEl) expDateEl.valueAsDate = new Date();
+
       loadDashboardData();
     }
 
@@ -391,7 +393,7 @@
       document.getElementById('fin-net-balance').textContent = `R$ ${(inc - exp).toFixed(2)}`;
     }
 
-    document.getElementById('expense-form').addEventListener('submit', async (e) => {
+    document.getElementById('expense-form')?.addEventListener('submit', async (e) => {
       e.preventDefault();
       const { error } = await sb.from('financial_transactions').insert({ type: 'expense', category: document.getElementById('exp-category').value, description: document.getElementById('exp-desc').value, amount: parseFloat(document.getElementById('exp-amount').value), transaction_date: document.getElementById('exp-date').value });
       if (error) return alert(error.message);
