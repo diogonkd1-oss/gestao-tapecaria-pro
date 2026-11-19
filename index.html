@@ -143,7 +143,71 @@
         </div>
       </section>
 
-      <section id="view-finance" class="hidden space-y-6">
+          <section id="view-finance" class="hidden space-y-6">
+        <div class="grid md:grid-cols-3 gap-4">
+          <div class="bg-white p-5 rounded-xl shadow border-l-4 border-emerald-500">
+            <span class="text-xs uppercase text-slate-500 font-semibold">Entradas</span>
+            <p id="fin-total-income" class="text-2xl font-bold text-emerald-600 mt-1">R$ 0,00</p>
+          </div>
+          <div class="bg-white p-5 rounded-xl shadow border-l-4 border-red-500">
+            <span class="text-xs uppercase text-slate-500 font-semibold">Saídas</span>
+            <p id="fin-total-expense" class="text-2xl font-bold text-red-600 mt-1">R$ 0,00</p>
+          </div>
+          <div class="bg-white p-5 rounded-xl shadow border-l-4 border-amber-500">
+            <span class="text-xs uppercase text-slate-500 font-semibold">Saldo Líquido</span>
+            <p id="fin-net-balance" class="text-2xl font-bold text-slate-900 mt-1">R$ 0,00</p>
+          </div>
+        </div>
+        <div class="grid md:grid-cols-3 gap-6">
+          <div class="bg-white rounded-xl shadow p-6 h-fit">
+            <h3 class="text-md font-bold text-slate-800 mb-4">Lançar Despesa</h3>
+            <form id="expense-form" class="space-y-3 text-sm">
+              <div>
+                <label class="block font-medium mb-1">Descrição</label>
+                <input type="text" id="exp-desc" required class="w-full border rounded-lg p-2">
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block font-medium mb-1">Categoria</label>
+                  <select id="exp-category" class="w-full border rounded-lg p-2 bg-white">
+                    <option value="energia">Energia/Água</option>
+                    <option value="aluguel">Aluguel</option>
+                    <option value="frete">Frete</option>
+                    <option value="salario">Mão de Obra</option>
+                    <option value="outros">Outros</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block font-medium mb-1">Valor (R$)</label>
+                  <input type="number" step="0.01" min="0.01" id="exp-amount" required class="w-full border rounded-lg p-2">
+                </div>
+              </div>
+              <div>
+                <label class="block font-medium mb-1">Data</label>
+                <input type="date" id="exp-date" required class="w-full border rounded-lg p-2">
+              </div>
+              <button type="submit" class="w-full bg-red-600 text-white font-semibold py-2 rounded-lg">Registrar Saída</button>
+            </form>
+          </div>
+          <div class="md:col-span-2 bg-white rounded-xl shadow p-6">
+            <h3 class="text-lg font-bold text-slate-800 mb-4">Movimentações</h3>
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="border-b text-xs uppercase text-slate-500">
+                  <th class="py-3 px-2">Data</th>
+                  <th class="py-3 px-2">Descrição</th>
+                  <th class="py-3 px-2">Categoria</th>
+                  <th class="py-3 px-2 text-right">Valor</th>
+                </tr>
+              </thead>
+              <tbody id="finance-table-body" class="divide-y text-sm"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
           <!-- MODAL: NOVO PEDIDO -->
   <div id="new-order-modal" class="hidden fixed inset-0 bg-slate-900/60 flex items-center justify-center p-4 z-50 overflow-y-auto">
     <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl p-6 my-8">
