@@ -175,6 +175,14 @@
       </section>
 
       <section id="view-finance" class="hidden space-y-6">
+                <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-xl shadow-sm border">
+          <span class="text-sm font-semibold text-slate-700">Filtrar período financeiro:</span>
+          <div class="flex items-center gap-2">
+            <input type="month" id="fin-month-filter" onchange="loadFinanceData()" class="border rounded-lg px-3 py-1.5 text-sm bg-slate-50">
+            <button type="button" onclick="document.getElementById('fin-month-filter').value=''; loadFinanceData();" class="text-xs text-slate-500 hover:underline px-2">Ver tudo</button>
+          </div>
+        </div>
+
         <div class="grid md:grid-cols-3 gap-4">
           <div class="bg-white p-5 rounded-xl shadow border-l-4 border-emerald-500"><span class="text-xs uppercase text-slate-500 font-semibold">Entradas</span><p id="fin-total-income" class="text-2xl font-bold text-emerald-600 mt-1">R$ 0,00</p></div>
           <div class="bg-white p-5 rounded-xl shadow border-l-4 border-red-500"><span class="text-xs uppercase text-slate-500 font-semibold">Saídas</span><p id="fin-total-expense" class="text-2xl font-bold text-red-600 mt-1">R$ 0,00</p></div>
@@ -286,6 +294,8 @@
           <span>Pago: <strong id="det-total-paid" class="text-emerald-700">R$ 0,00</strong></span>
           <span>Restante: <strong id="det-balance-due" class="text-red-600">R$ 0,00</strong></span>
         </div>
+                <p id="det-profit-info" class="text-xs text-slate-700 bg-white px-3 py-2 rounded border border-emerald-200"></p>
+
         <form id="add-payment-form" class="flex flex-wrap gap-2 items-center pt-2 border-t border-emerald-200 text-sm">
           <input type="number" step="0.01" min="0.01" id="pay-amount" placeholder="Valor (R$)" required class="border rounded-lg p-2 bg-white w-36">
           <select id="pay-method" class="border rounded-lg p-2 bg-white"><option value="pix">PIX</option><option value="dinheiro">Dinheiro</option><option value="cartao_credito">Crédito</option><option value="cartao_debito">Débito</option></select>
@@ -459,10 +469,21 @@ window.addMaterialRow = addMaterialRow;
         document.getElementById('det-total-price').textContent = formatBRL(summary.total_price);
         document.getElementById('det-total-paid').textContent = formatBRL(summary.total_paid);
         document.getElementById('det-balance-due').textContent = formatBRL(summary.balance_due);
+                loadOrderProfit(id, summary.total_price);
+
       }
       document.getElementById('order-details-modal').classList.remove('hidden');
       loadOrderPhotos(id);
             if (currentUserRole === 'owner') loadOrderPayments(id);
+          async function loadOrderProfit(orderId, totalPrice) {
+      const profitEl = document.getElementById('det-profit-info');
+      if (!profitEl) return;
+      const { data: items } = await sb.from('order_materials').select('quantity_used, materials(unit_cost)').eq('order_id', orderId);
+      const matCost = (items || []).reduce((acc, it) => acc + (Number(it.quantity_used || 0) * Number(it.materials?.unit_cost || 0)), 0);
+      const profit = Number(totalPrice || 0) - matCost;
+      profitEl.innerHTML = `Custo de Materiais: <strong>${formatBRL(matCost)}</strong> • Lucro Estimado: <strong class="${profit >= 0 ? 'text-emerald-700' : 'text-red-600'}">${formatBRL(profit)}</strong>`;
+    }
+
 
     }
     async function loadOrderPayments(orderId) {
@@ -585,7 +606,17 @@ window.addMaterialRow = addMaterialRow;
     }
 
     async function loadFinanceData() {
-      const { data: txs } = await sb.from('financial_transactions').select('*').order('transaction_date', { ascending: false }).limit(50);
+           const monthVal = document.getElementById('fin-month-filter')?.value;
+      let query = sb.from('financial_transactions').select('*').order('transaction_date', { ascending: false });
+      if (monthVal) {
+        const [y, m] = monthVal.split('-');
+        const lastDay = new Date(Number(y), Number(m), 0).getDate();
+        query = query.gte('transaction_date', `${monthVal}-01`).lte('transaction_date', `${monthVal}-${lastDay}`);
+      } else {
+        query = query.limit(100);
+      }
+      const { data: txs } = await query;
+
       let inc = 0, exp = 0;
       document.getElementById('finance-table-body').innerHTML = (txs || []).map(t => {
         const v = Number(t.amount); if (t.type === 'income') inc += v; else exp += v;
