@@ -383,7 +383,8 @@ window.addMaterialRow = addMaterialRow;
       cachedOrders = orders || [];
       document.getElementById('orders-table-body').innerHTML = cachedOrders.map(o => {
         const id = o.order_id || o.id;
-        return `<tr class="hover:bg-slate-50"><td class="py-3 px-2 font-mono text-xs">#${o.order_number}</td><td class="py-3 px-2 font-medium">${o.customer_name}</td><td class="py-3 px-2">${o.product_description}</td><td class="py-3 px-2">${o.due_date || '-'}</td>${currentUserRole === 'owner' ? `<td class="py-3 px-2"><span class="font-semibold">${formatBRL(o.total_price)}</span><span class="block text-xs text-green-600">Pago: ${formatBRL(o.total_paid)}</span></td>` : ''}<td class="py-3 px-2"><select onchange="updateOrderStatus('${id}', this.value)" class="border rounded px-2 py-1 text-xs bg-white"><option value="quote" ${o.status==='quote'?'selected':''}>Orçamento</option><option value="pending" ${o.status==='pending'?'selected':''}>Pendente</option><option value="in_progress" ${o.status==='in_progress'?'selected':''}>Em Produção</option><option value="completed" ${o.status==='completed'?'selected':''}>Concluído</option><option value="cancelled" ${o.status==='cancelled'?'selected':''}>Cancelado</option></select></td><td class="py-3 px-2 text-right"><button onclick="openOrderDetails('${id}')" class="text-xs bg-slate-200 px-2.5 py-1.5 rounded font-medium">Detalhes / PDF</button></td></tr>`;
+        return `<tr class="hover:bg-slate-50"><td class="py-3 px-2 font-mono text-xs">#${o.order_number}</td><td class="py-3 px-2 font-medium">${o.customer_name}</td><td class="py-3 px-2">${o.product_description}</td><td class="py-3 px-2">${o.due_date ? new Date(o.due_date + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}
+</td>${currentUserRole === 'owner' ? `<td class="py-3 px-2"><span class="font-semibold">${formatBRL(o.total_price)}</span><span class="block text-xs text-green-600">Pago: ${formatBRL(o.total_paid)}</span></td>` : ''}<td class="py-3 px-2"><select onchange="updateOrderStatus('${id}', this.value)" class="border rounded px-2 py-1 text-xs bg-white"><option value="quote" ${o.status==='quote'?'selected':''}>Orçamento</option><option value="pending" ${o.status==='pending'?'selected':''}>Pendente</option><option value="in_progress" ${o.status==='in_progress'?'selected':''}>Em Produção</option><option value="completed" ${o.status==='completed'?'selected':''}>Concluído</option><option value="cancelled" ${o.status==='cancelled'?'selected':''}>Cancelado</option></select></td><td class="py-3 px-2 text-right"><button onclick="openOrderDetails('${id}')" class="text-xs bg-slate-200 px-2.5 py-1.5 rounded font-medium">Detalhes / PDF</button></td></tr>`;
       }).join('');
 
       const { data: materials } = await sb.from('materials').select('*').order('name');
@@ -543,7 +544,8 @@ window.addMaterialRow = addMaterialRow;
       let inc = 0, exp = 0;
       document.getElementById('finance-table-body').innerHTML = (txs || []).map(t => {
         const v = Number(t.amount); if (t.type === 'income') inc += v; else exp += v;
-        return `<tr><td class="py-2 px-2">${t.transaction_date}</td><td class="py-2 px-2">${t.description}</td><td class="py-2 px-2">${t.category}</td><td class="py-2 px-2 text-right font-semibold ${t.type==='income'?'text-emerald-600':'text-red-600'}">${formatBRL(v)}</td></tr>`;
+              return `<tr><td class="py-2 px-2">${t.transaction_date ? new Date(t.transaction_date + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}</td><td class="py-2 px-2">${t.description}</td><td class="py-2 px-2">${t.category}</td><td class="py-2 px-2 text-right font-semibold ${t.type==='income'?'text-emerald-600':'text-red-600'}">${formatBRL(v)}</td></tr>`;
+
       }).join('');
       document.getElementById('fin-total-income').textContent = formatBRL(inc);
       document.getElementById('fin-total-expense').textContent = formatBRL(exp);
