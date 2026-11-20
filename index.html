@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gestão Tapeçaria Pro</title>
+  <title>Mônica Ambientes</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#d97706">
   <script src="https://cdn.tailwindcss.com"></script>
@@ -13,9 +13,11 @@
 
   <style>
     @media print {
+            @page { margin: 0; }
+
       body * { visibility: hidden; }
       #print-receipt-area, #print-receipt-area * { visibility: visible; }
-      #print-receipt-area { position: absolute; left: 0; top: 0; width: 100%; padding: 20px; background: white; }
+      #print-receipt-area { position: absolute; left: 0; top: 0; width: 100%; padding: 1.5cm; background: white; }
     }
   </style>
 </head>
