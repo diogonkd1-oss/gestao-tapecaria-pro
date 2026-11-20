@@ -7,7 +7,7 @@
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#d97706">
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/supabase-js/2.49.1/supabase.umd.min.js"></script>
+ 
 
 
 
@@ -275,10 +275,25 @@
     </div>
   </div>
 
-  <script>
+    <script type="module">
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
     const SUPABASE_URL = 'https://sctusphhflqacfwknkaw.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNjdHVzcGhoZmxxYWNmd2tua2F3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUwMTIyMTgsImV4cCI6MjExMDU4ODIxOH0.GufPhKrvpMMahQsvmd57QjUBW3wfOlan088t06O3uE8';
-    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+window.logout = logout;
+window.switchTab = switchTab;
+window.loadDashboardData = loadDashboardData;
+window.updateOrderStatus = updateOrderStatus;
+window.openOrderDetails = openOrderDetails;
+window.printOrderReceipt = printOrderReceipt;
+window.closeOrderDetailsModal = closeOrderDetailsModal;
+window.toggleEditOrder = toggleEditOrder;
+window.deleteActiveOrder = deleteActiveOrder;
+window.openNewOrderModal = openNewOrderModal;
+window.closeNewOrderModal = closeNewOrderModal;
+window.toggleCustomerMode = toggleCustomerMode;
+window.addMaterialRow = addMaterialRow;
+
 
     let currentUserRole = 'employee', cachedMaterials = [], cachedCustomers = [], cachedOrders = [], activeOrderId = null, activeOrderFull = null;
 
