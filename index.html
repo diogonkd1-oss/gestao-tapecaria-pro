@@ -303,5 +303,246 @@
       const password = document.getElementById('password').value;
       const { error } = await sb.auth.signInWithPassword({ email, password });
       if (error) {
+                const errEl = document.getElementById('login-error');
+        errEl.textContent = 'Erro ao entrar: ' + error.message;
+        errEl.classList.remove('hidden');
+      }
+    });
 
-        
+    async function logout() { await sb.auth.signOut(); }
+
+    function switchTab(tab) {
+      ['orders', 'stock', 'finance'].forEach(t => {
+        const isCurrent = t === tab;
+        document.getElementById(`view-${t}`).classList.toggle('hidden', !isCurrent);
+        const btn = document.getElementById(`tab-${t}`);
+        if (btn) btn.className = isCurrent ? 'px-3 py-1.5 rounded text-sm font-medium bg-amber-600 text-white' : (t === 'finance' && currentUserRole !== 'owner' ? 'hidden ' : '') + 'px-3 py-1.5 rounded text-sm font-medium bg-slate-800 text-slate-300';
+      });
+      if (tab === 'finance') loadFinanceData();
+    }
+
+    async function initDashboard(userId) {
+      const { data: profile } = await sb.from('profiles').select('*').eq('id', userId).single();
+      if (profile) {
+        currentUserRole = profile.role;
+        document.getElementById('user-badge').textContent = `${profile.full_name} (${profile.role === 'owner' ? 'Proprietário' : 'Funcionário'})`;
+        if (currentUserRole === 'owner') document.querySelectorAll('.owner-only').forEach(el => el.classList.remove('hidden'));
+      }
+      const expDateEl = document.getElementById('exp-date');
+      if (expDateEl) expDateEl.valueAsDate = new Date();
+      loadDashboardData();
+    }
+
+    async function loadDashboardData() {
+      const { data: lowStock } = await sb.from('view_low_stock_materials').select('*');
+      const alertBox = document.getElementById('stock-alerts-container');
+      if (lowStock && lowStock.length > 0) {
+        alertBox.classList.remove('hidden');
+        document.getElementById('stock-alerts-list').innerHTML = lowStock.map(m => `<li>• <strong>${m.name}</strong>: Restam ${m.stock_quantity} ${m.unit}(s)</li>`).join('');
+      } else { alertBox.classList.add('hidden'); }
+
+      const table = currentUserRole === 'owner' ? 'view_order_financial_summary' : 'manufacturing_orders';
+      const { data: orders } = await sb.from(table).select('*').order('due_date', { ascending: true });
+      cachedOrders = orders || [];
+      document.getElementById('orders-table-body').innerHTML = cachedOrders.map(o => {
+        const id = o.order_id || o.id;
+        return `<tr class="hover:bg-slate-50"><td class="py-3 px-2 font-mono text-xs">#${o.order_number}</td><td class="py-3 px-2 font-medium">${o.customer_name}</td><td class="py-3 px-2">${o.product_description}</td><td class="py-3 px-2">${o.due_date || '-'}</td>${currentUserRole === 'owner' ? `<td class="py-3 px-2"><span class="font-semibold">${formatBRL(o.total_price)}</span><span class="block text-xs text-green-600">Pago: ${formatBRL(o.total_paid)}</span></td>` : ''}<td class="py-3 px-2"><select onchange="updateOrderStatus('${id}', this.value)" class="border rounded px-2 py-1 text-xs bg-white"><option value="quote" ${o.status==='quote'?'selected':''}>Orçamento</option><option value="pending" ${o.status==='pending'?'selected':''}>Pendente</option><option value="in_progress" ${o.status==='in_progress'?'selected':''}>Em Produção</option><option value="completed" ${o.status==='completed'?'selected':''}>Concluído</option><option value="cancelled" ${o.status==='cancelled'?'selected':''}>Cancelado</option></select></td><td class="py-3 px-2 text-right"><button onclick="openOrderDetails('${id}')" class="text-xs bg-slate-200 px-2.5 py-1.5 rounded font-medium">Detalhes / PDF</button></td></tr>`;
+      }).join('');
+
+      const { data: materials } = await sb.from('materials').select('*').order('name');
+      cachedMaterials = materials || [];
+      document.getElementById('materials-table-body').innerHTML = cachedMaterials.map(m => `<tr><td class="py-3 px-2 font-medium">${m.name}</td><td class="py-3 px-2 capitalize">${m.category}</td><td class="py-3 px-2 font-semibold ${m.stock_quantity<=m.min_stock_alert?'text-red-600':''}">${m.stock_quantity} ${m.unit}(s)</td><td class="py-3 px-2">${m.min_stock_alert}</td>${currentUserRole==='owner'?`<td class="py-3 px-2">${formatBRL(m.unit_cost)}</td>`:''}</tr>`).join('');
+      const matSelect = document.getElementById('entry-material-id');
+      if (matSelect) matSelect.innerHTML = cachedMaterials.map(m => `<option value="${m.id}">${m.name} (${m.unit})</option>`).join('');
+      const { data: customers } = await sb.from('customers').select('*').order('full_name');
+      cachedCustomers = customers || [];
+    }
+
+    async function updateOrderStatus(id, status) {
+      const { error } = await sb.from('manufacturing_orders').update({ status }).eq('id', id);
+      if (error) alert(error.message);
+      loadDashboardData();
+    }
+
+    async function openOrderDetails(id) {
+      activeOrderId = id;
+      const summary = cachedOrders.find(o => (o.order_id || o.id) === id);
+      const { data: fullOrder } = await sb.from('manufacturing_orders').select('*').eq('id', id).single();
+      activeOrderFull = fullOrder;
+      document.getElementById('det-title').textContent = `Pedido #${fullOrder.order_number} - ${fullOrder.customer_name}`;
+      document.getElementById('det-subtitle').textContent = fullOrder.product_description;
+      document.getElementById('det-notes').textContent = fullOrder.details || 'Sem observações.';
+      if (currentUserRole === 'owner' && summary) {
+        document.getElementById('det-total-price').textContent = formatBRL(summary.total_price);
+        document.getElementById('det-total-paid').textContent = formatBRL(summary.total_paid);
+        document.getElementById('det-balance-due').textContent = formatBRL(summary.balance_due);
+      }
+      document.getElementById('order-details-modal').classList.remove('hidden');
+      loadOrderPhotos(id);
+    }
+
+    function printOrderReceipt() {
+      if (!activeOrderFull) return;
+      const summary = cachedOrders.find(o => (o.order_id || o.id) === activeOrderId);
+      document.getElementById('print-order-num').textContent = `OS #${activeOrderFull.order_number}`;
+      document.getElementById('print-date').textContent = `Emitido em: ${new Date().toLocaleDateString('pt-BR')}`;
+      document.getElementById('print-customer').textContent = activeOrderFull.customer_name;
+      document.getElementById('print-due-date').textContent = activeOrderFull.due_date ? new Date(activeOrderFull.due_date + 'T00:00:00').toLocaleDateString('pt-BR') : 'A combinar';
+      document.getElementById('print-desc').textContent = activeOrderFull.product_description;
+      document.getElementById('print-details').textContent = activeOrderFull.details || 'Conforme combinado.';
+      if (currentUserRole === 'owner' && summary) {
+        document.getElementById('print-finance-box').classList.remove('hidden');
+        document.getElementById('print-total').textContent = formatBRL(summary.total_price);
+        document.getElementById('print-paid').textContent = formatBRL(summary.total_paid);
+        document.getElementById('print-balance').textContent = formatBRL(summary.balance_due);
+      } else { document.getElementById('print-finance-box').classList.add('hidden'); }
+      window.print();
+    }
+
+    function closeOrderDetailsModal() { document.getElementById('order-details-modal').classList.add('hidden'); document.getElementById('edit-order-form').classList.add('hidden'); activeOrderId = null; }
+
+    function toggleEditOrder() {
+      const form = document.getElementById('edit-order-form');
+      form.classList.toggle('hidden');
+      if (!form.classList.contains('hidden') && activeOrderFull) {
+        document.getElementById('edit-cust-name').value = activeOrderFull.customer_name || '';
+        document.getElementById('edit-due-date').value = activeOrderFull.due_date || '';
+        document.getElementById('edit-desc').value = activeOrderFull.product_description || '';
+        document.getElementById('edit-total-price').value = activeOrderFull.total_price || 0;
+        document.getElementById('edit-details').value = activeOrderFull.details || '';
+      }
+    }
+
+    document.getElementById('edit-order-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const { error } = await sb.from('manufacturing_orders').update({
+        customer_name: document.getElementById('edit-cust-name').value.trim(),
+        due_date: document.getElementById('edit-due-date').value || null,
+        product_description: document.getElementById('edit-desc').value.trim(),
+        total_price: parseFloat(document.getElementById('edit-total-price').value) || 0,
+        details: document.getElementById('edit-details').value.trim()
+      }).eq('id', activeOrderId);
+      if (error) return alert('Erro ao salvar: ' + error.message);
+      document.getElementById('edit-order-form').classList.add('hidden');
+      await loadDashboardData();
+      openOrderDetails(activeOrderId);
+    });
+
+    async function deleteActiveOrder() {
+      if (!activeOrderId) return;
+      if (!confirm('Tem certeza que deseja excluir este pedido permanentemente?')) return;
+      const { error } = await sb.from('manufacturing_orders').delete().eq('id', activeOrderId);
+      if (error) return alert('Erro ao excluir: ' + error.message);
+      closeOrderDetailsModal();
+      loadDashboardData();
+    }
+    document.getElementById('add-payment-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const order = cachedOrders.find(o => (o.order_id || o.id) === activeOrderId);
+      const { error } = await sb.from('financial_transactions').insert({ type: 'income', category: 'pedido', description: `Pagamento Pedido #${order.order_number}`, amount: parseFloat(document.getElementById('pay-amount').value), payment_method: document.getElementById('pay-method').value, order_id: activeOrderId });
+      if (error) return alert(error.message);
+      e.target.reset(); await loadDashboardData(); openOrderDetails(activeOrderId);
+    });
+
+    document.getElementById('upload-photo-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const file = document.getElementById('photo-file').files[0];
+      if (!file) return;
+      const btn = document.getElementById('upload-photo-btn'); btn.disabled = true;
+      try {
+        const path = `${activeOrderId}/${Date.now()}.${file.name.split('.').pop()}`;
+        const { error: upErr } = await sb.storage.from('order-photos').upload(path, file);
+        if (upErr) throw upErr;
+        const { error: dbErr } = await sb.from('order_photos').insert({ order_id: activeOrderId, storage_path: path, stage: document.getElementById('photo-stage').value });
+        if (dbErr) throw dbErr;
+        e.target.reset(); loadOrderPhotos(activeOrderId);
+      } catch (err) { alert(err.message); } finally { btn.disabled = false; }
+    });
+
+    async function loadOrderPhotos(id) {
+      const grid = document.getElementById('order-photos-grid');
+      const { data: photos } = await sb.from('order_photos').select('*').eq('order_id', id);
+      if (!photos || photos.length === 0) { grid.innerHTML = '<p class="text-xs text-slate-400 col-span-3">Nenhuma foto.</p>'; return; }
+      const cards = await Promise.all(photos.map(async p => {
+        const { data } = await sb.storage.from('order-photos').createSignedUrl(p.storage_path, 3600);
+        return `<div class="border rounded overflow-hidden"><a href="${data?.signedUrl}" target="_blank"><img src="${data?.signedUrl}" class="w-full h-32 object-cover"></a></div>`;
+      }));
+      grid.innerHTML = cards.join('');
+    }
+
+    async function loadFinanceData() {
+      const { data: txs } = await sb.from('financial_transactions').select('*').order('transaction_date', { ascending: false }).limit(50);
+      let inc = 0, exp = 0;
+      document.getElementById('finance-table-body').innerHTML = (txs || []).map(t => {
+        const v = Number(t.amount); if (t.type === 'income') inc += v; else exp += v;
+        return `<tr><td class="py-2 px-2">${t.transaction_date}</td><td class="py-2 px-2">${t.description}</td><td class="py-2 px-2">${t.category}</td><td class="py-2 px-2 text-right font-semibold ${t.type==='income'?'text-emerald-600':'text-red-600'}">${formatBRL(v)}</td></tr>`;
+      }).join('');
+      document.getElementById('fin-total-income').textContent = formatBRL(inc);
+      document.getElementById('fin-total-expense').textContent = formatBRL(exp);
+      document.getElementById('fin-net-balance').textContent = formatBRL(inc - exp);
+    }
+
+    document.getElementById('expense-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const { error } = await sb.from('financial_transactions').insert({ type: 'expense', category: document.getElementById('exp-category').value, description: document.getElementById('exp-desc').value, amount: parseFloat(document.getElementById('exp-amount').value), transaction_date: document.getElementById('exp-date').value });
+      if (error) return alert(error.message);
+      e.target.reset(); loadFinanceData();
+    });
+
+    function openNewOrderModal() {
+      const sel = document.getElementById('order-customer-select');
+      sel.innerHTML = cachedCustomers.length ? cachedCustomers.map(c => `<option value="${c.id}" data-name="${c.full_name}">${c.full_name}</option>`).join('') : '<option value="">Nenhum cliente</option>';
+      if (cachedCustomers.length === 0) { document.getElementById('is-new-customer').checked = true; toggleCustomerMode(); }
+      document.getElementById('order-materials-list').innerHTML = '';
+      document.getElementById('new-order-modal').classList.remove('hidden');
+    }
+    function closeNewOrderModal() { document.getElementById('new-order-modal').classList.add('hidden'); document.getElementById('new-order-form').reset(); }
+    function toggleCustomerMode() { const isNew = document.getElementById('is-new-customer').checked; document.getElementById('existing-customer-box').classList.toggle('hidden', isNew); document.getElementById('new-customer-box').classList.toggle('hidden', !isNew); }
+    function addMaterialRow() {
+      if (!cachedMaterials.length) return alert('Cadastre materiais primeiro.');
+      const row = document.createElement('div'); row.className = 'flex gap-2 items-center material-row';
+      row.innerHTML = `<select class="mat-select flex-1 border rounded p-2 text-xs">${cachedMaterials.map(m => `<option value="${m.id}">${m.name} (${m.stock_quantity})</option>`).join('')}</select><input type="number" step="0.01" min="0.01" placeholder="Qtd" required class="mat-qty w-24 border rounded p-2 text-xs"><button type="button" onclick="this.parentElement.remove()" class="text-red-500 font-bold px-2">&times;</button>`;
+      document.getElementById('order-materials-list').appendChild(row);
+    }
+
+    document.getElementById('new-order-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      try {
+        let custId = null, custName = '';
+        if (document.getElementById('is-new-customer').checked) {
+          custName = document.getElementById('new-cust-name').value.trim();
+          const { data: nc, error: ce } = await sb.from('customers').insert({ full_name: custName, phone: document.getElementById('new-cust-phone').value }).select().single();
+          if (ce) throw ce; custId = nc.id;
+        } else { const sel = document.getElementById('order-customer-select'); custId = sel.value || null; custName = sel.options[sel.selectedIndex]?.dataset?.name || 'Cliente'; }
+
+        const { data: no, error: oe } = await sb.from('manufacturing_orders').insert({ customer_id: custId, customer_name: custName, product_description: document.getElementById('order-desc').value, details: document.getElementById('order-details').value, due_date: document.getElementById('order-due-date').value || null, status: document.getElementById('order-status').value, total_price: parseFloat(document.getElementById('order-total-price').value) || 0 }).select().single();
+        if (oe) throw oe;
+
+        for (const row of document.querySelectorAll('.material-row')) {
+          const { error: me } = await sb.from('order_materials').insert({ order_id: no.id, material_id: row.querySelector('.mat-select').value, quantity_used: parseFloat(row.querySelector('.mat-qty').value) });
+          if (me) throw me;
+        }
+        const dep = parseFloat(document.getElementById('order-deposit').value) || 0;
+        if (dep > 0) await sb.from('financial_transactions').insert({ type: 'income', category: 'pedido', description: `Sinal Pedido #${no.order_number}`, amount: dep, order_id: no.id });
+        closeNewOrderModal(); loadDashboardData();
+      } catch (err) { alert(err.message); }
+    });
+
+    document.getElementById('new-material-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const { error } = await sb.from('materials').insert({ name: document.getElementById('mat-name').value, category: document.getElementById('mat-category').value, unit: document.getElementById('mat-unit').value, min_stock_alert: parseFloat(document.getElementById('mat-min-alert').value) });
+      if (error) return alert(error.message);
+      e.target.reset(); loadDashboardData();
+    });
+
+    document.getElementById('stock-entry-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const { error } = await sb.from('stock_entries').insert({ material_id: document.getElementById('entry-material-id').value, quantity_added: parseFloat(document.getElementById('entry-qty').value), unit_cost: parseFloat(document.getElementById('entry-cost').value), supplier: document.getElementById('entry-supplier').value });
+      if (error) return alert(error.message);
+      e.target.reset(); alert('Compra registrada!'); loadDashboardData();
+    });
+  </script>
+</body>
+</html>
+
+  
