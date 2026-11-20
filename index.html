@@ -114,6 +114,18 @@
             <button onclick="openNewOrderModal()" class="owner-only hidden bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold px-4 py-2 rounded-lg">+ Novo Pedido</button>
           </div>
         </div>
+                <div class="flex flex-wrap gap-3 mb-4">
+          <input type="text" id="order-search" oninput="renderOrdersTable()" placeholder="Buscar por cliente, nº da OS ou serviço..." class="flex-1 min-w-[220px] border rounded-lg px-3 py-2 text-sm bg-slate-50">
+          <select id="order-status-filter" onchange="renderOrdersTable()" class="border rounded-lg px-3 py-2 text-sm bg-white">
+            <option value="all">Todos os status</option>
+            <option value="quote">Orçamento</option>
+            <option value="pending">Pendente</option>
+            <option value="in_progress">Em Produção</option>
+            <option value="completed">Concluído</option>
+            <option value="cancelled">Cancelado</option>
+          </select>
+        </div>
+
         <div class="overflow-x-auto">
           <table class="w-full text-left border-collapse">
             <thead>
@@ -315,6 +327,8 @@ window.openNewOrderModal = openNewOrderModal;
 window.closeNewOrderModal = closeNewOrderModal;
 window.toggleCustomerMode = toggleCustomerMode;
 window.addMaterialRow = addMaterialRow;
+          window.renderOrdersTable = renderOrdersTable;
+
           window.deletePayment = deletePayment;
 
 
@@ -383,11 +397,40 @@ window.addMaterialRow = addMaterialRow;
       const table = currentUserRole === 'owner' ? 'view_order_financial_summary' : 'manufacturing_orders';
       const { data: orders } = await sb.from(table).select('*').order('due_date', { ascending: true });
       cachedOrders = orders || [];
-      document.getElementById('orders-table-body').innerHTML = cachedOrders.map(o => {
+           const { data: custList } = await sb.from('customers').select('*').order('full_name');
+      cachedCustomers = custList || [];
+      renderOrdersTable();
+            await loadMaterialsAndCustomers();
+
+    }
+
+    function renderOrdersTable() {
+      const search = (document.getElementById('order-search')?.value || '').toLowerCase().trim();
+      const statusFilter = document.getElementById('order-status-filter')?.value || 'all';
+
+      const filtered = cachedOrders.filter(o => {
+        const matchText = !search ||
+          (o.customer_name || '').toLowerCase().includes(search) ||
+          String(o.order_number || '').includes(search) ||
+          (o.product_description || '').toLowerCase().includes(search);
+        const matchStatus = statusFilter === 'all' || o.status === statusFilter;
+        return matchText && matchStatus;
+      });
+
+      document.getElementById('orders-table-body').innerHTML = filtered.map(o => {
         const id = o.order_id || o.id;
-        return `<tr class="hover:bg-slate-50"><td class="py-3 px-2 font-mono text-xs">#${o.order_number}</td><td class="py-3 px-2 font-medium">${o.customer_name}</td><td class="py-3 px-2">${o.product_description}</td><td class="py-3 px-2">${o.due_date ? new Date(o.due_date + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}
-</td>${currentUserRole === 'owner' ? `<td class="py-3 px-2"><span class="font-semibold">${formatBRL(o.total_price)}</span><span class="block text-xs text-green-600">Pago: ${formatBRL(o.total_paid)}</span></td>` : ''}<td class="py-3 px-2"><select onchange="updateOrderStatus('${id}', this.value)" class="border rounded px-2 py-1 text-xs bg-white"><option value="quote" ${o.status==='quote'?'selected':''}>Orçamento</option><option value="pending" ${o.status==='pending'?'selected':''}>Pendente</option><option value="in_progress" ${o.status==='in_progress'?'selected':''}>Em Produção</option><option value="completed" ${o.status==='completed'?'selected':''}>Concluído</option><option value="cancelled" ${o.status==='cancelled'?'selected':''}>Cancelado</option></select></td><td class="py-3 px-2 text-right"><button onclick="openOrderDetails('${id}')" class="text-xs bg-slate-200 px-2.5 py-1.5 rounded font-medium">Detalhes / PDF</button></td></tr>`;
+        const cust = cachedCustomers.find(c => c.id === o.customer_id);
+        const cleanPhone = (cust?.phone || '').replace(/\D/g, '');
+        const waMsg = encodeURIComponent(`Olá ${o.customer_name}, aqui é da Mônica Ambientes! Sobre o seu pedido #${o.order_number} (${o.product_description}): `);
+        const waBtn = cleanPhone
+          ? `<a href="https://wa.me/55${cleanPhone}?text=${waMsg}" target="_blank" class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1.5 rounded font-medium">WhatsApp</a>`
+          : '';
+
+        return `<tr class="hover:bg-slate-50"><td class="py-3 px-2 font-mono text-xs">#${o.order_number}</td><td class="py-3 px-2 font-medium">${o.customer_name}</td><td class="py-3 px-2">${o.product_description}</td><td class="py-3 px-2">${o.due_date ? new Date(o.due_date + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}</td>${currentUserRole === 'owner' ? `<td class="py-3 px-2"><span class="font-semibold">${formatBRL(o.total_price)}</span><span class="block text-xs text-green-600">Pago: ${formatBRL(o.total_paid)}</span></td>` : ''}<td class="py-3 px-2"><select onchange="updateOrderStatus('${id}', this.value)" class="border rounded px-2 py-1 text-xs bg-white"><option value="quote" ${o.status==='quote'?'selected':''}>Orçamento</option><option value="pending" ${o.status==='pending'?'selected':''}>Pendente</option><option value="in_progress" ${o.status==='in_progress'?'selected':''}>Em Produção</option><option value="completed" ${o.status==='completed'?'selected':''}>Concluído</option><option value="cancelled" ${o.status==='cancelled'?'selected':''}>Cancelado</option></select></td><td class="py-3 px-2 text-right space-x-1 whitespace-nowrap">${waBtn}<button onclick="openOrderDetails('${id}')" class="text-xs bg-slate-200 px-2.5 py-1.5 rounded font-medium">Detalhes / PDF</button></td></tr>`;
       }).join('');
+    }
+
+    async function loadMaterialsAndCustomers() {
 
       const { data: materials } = await sb.from('materials').select('*').order('name');
       cachedMaterials = materials || [];
