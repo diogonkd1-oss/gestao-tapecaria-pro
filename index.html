@@ -463,15 +463,19 @@ window.addMaterialRow = addMaterialRow;
 
     async function logout() { await sb.auth.signOut(); }
 
-    function switchTab(tab) {
-      ['orders', 'stock', 'finance'].forEach(t => {
+      function switchTab(tab) {
+      ['orders', 'stock', 'finance', 'sales'].forEach(t => {
         const isCurrent = t === tab;
         document.getElementById(`view-${t}`).classList.toggle('hidden', !isCurrent);
         const btn = document.getElementById(`tab-${t}`);
-        if (btn) btn.className = isCurrent ? 'px-3 py-1.5 rounded text-sm font-medium bg-amber-600 text-white' : (t === 'finance' && currentUserRole !== 'owner' ? 'hidden ' : '') + 'px-3 py-1.5 rounded text-sm font-medium bg-slate-800 text-slate-300';
+        if (btn) btn.className = isCurrent
+          ? 'px-3 py-1.5 rounded text-sm font-medium bg-amber-600 text-white'
+          : ((t === 'finance' || t === 'sales') && currentUserRole !== 'owner' ? 'hidden ' : '') + 'px-3 py-1.5 rounded text-sm font-medium bg-slate-800 text-slate-300';
       });
       if (tab === 'finance') loadFinanceData();
+      if (tab === 'sales') loadSalesData();
     }
+
 
     async function initDashboard(userId) {
       const { data: profile } = await sb.from('profiles').select('*').eq('id', userId).single();
