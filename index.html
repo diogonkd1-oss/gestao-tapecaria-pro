@@ -265,6 +265,8 @@
             <form id="quick-sale-form" class="space-y-3 text-sm">
               <input type="text" id="qs-desc" placeholder="Ex: 4 Almofadas decorativas / Impermeabilização" required class="w-full border rounded-lg p-2">
               <input type="text" id="qs-client" placeholder="Nome do Cliente (opcional)" class="w-full border rounded-lg p-2">
+                          <input type="text" id="qs-seller" placeholder="Quem vendeu (Ex: Mônica / Diógenes)" required class="w-full border rounded-lg p-2">
+
               <div class="grid grid-cols-2 gap-2">
                 <input type="number" step="0.01" min="0.01" id="qs-amount" placeholder="Valor (R$)" required class="w-full border rounded-lg p-2">
                 <select id="qs-method" class="w-full border rounded-lg p-2 bg-white">
@@ -284,6 +286,8 @@
               <table class="w-full text-left text-sm">
                 <thead>
                   <tr class="border-b text-xs uppercase text-slate-500">
+                                      <th class="py-2 px-2">Vendedor(a)</th>
+
                     <th class="py-2 px-2">Data</th>
                     <th class="py-2 px-2">Origem</th>
                     <th class="py-2 px-2">Item / Serviço Vendido</th>
@@ -318,7 +322,11 @@
             <input type="text" id="new-cust-name" placeholder="Nome completo *" class="border rounded-lg p-2">
             <input type="text" id="new-cust-phone" placeholder="Telefone / WhatsApp" class="border rounded-lg p-2">
           </div>
-        </div>
+        </div>          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Quem Vendeu (Vendedor/a)</label>
+            <input type="text" id="order-seller" placeholder="Ex: Mônica / Diógenes" class="w-full border rounded-lg p-2 text-sm">
+          </div>
+
         <div class="grid md:grid-cols-3 gap-3">
           <div class="md:col-span-2"><label class="block font-medium mb-1">Descrição do Serviço *</label><input type="text" id="order-desc" required class="w-full border rounded-lg p-2"></div>
           <div><label class="block font-medium mb-1">Entrega</label><input type="date" id="order-due-date" class="w-full border rounded-lg p-2"></div>
@@ -723,19 +731,24 @@ window.addMaterialRow = addMaterialRow;
         .gte('transaction_date', startStr)
         .lte('transaction_date', endStr);
 
-      const items = [
+           const items = [
         ...(orders || []).map(o => ({
           date: o.created_at.slice(0, 10),
           origin: `OS #${o.order_number}`,
+          seller: o.seller_name || 'Não informado',
           title: `${o.product_description} (${o.customer_name})`,
           amount: Number(o.total_price || 0)
         })),
-        ...(directSales || []).map(s => ({
-          date: s.transaction_date,
-          origin: 'Venda Rápida',
-          title: s.description,
-          amount: Number(s.amount || 0)
-        }))
+        ...(directSales || []).map(s => {
+          const parts = (s.description || '').split(' | Vendedor: ');
+          return {
+            date: s.transaction_date,
+            origin: 'Venda Rápida',
+            seller: parts[1] || 'Não informado',
+            title: parts[0],
+            amount: Number(s.amount || 0)
+          };
+        })
       ].sort((a, b) => b.date.localeCompare(a.date));
 
       const totalRev = items.reduce((acc, it) => acc + it.amount, 0);
@@ -747,8 +760,8 @@ window.addMaterialRow = addMaterialRow;
       document.getElementById('sales-avg-ticket').textContent = formatBRL(avg);
 
       document.getElementById('sales-table-body').innerHTML = items.length
-        ? items.map(it => `<tr><td class="py-2.5 px-2">${new Date(it.date + 'T00:00:00').toLocaleDateString('pt-BR')}</td><td class="py-2.5 px-2 font-mono text-xs">${it.origin}</td><td class="py-2.5 px-2 font-medium">${it.title}</td><td class="py-2.5 px-2 text-right font-semibold text-slate-900">${formatBRL(it.amount)}</td></tr>`).join('')
-        : '<tr><td colspan="4" class="py-4 text-center text-slate-400">Nenhuma venda fechada neste mês.</td></tr>';
+        ? items.map(it => `<tr><td class="py-2.5 px-2">${new Date(it.date + 'T00:00:00').toLocaleDateString('pt-BR')}</td><td class="py-2.5 px-2 font-mono text-xs">${it.origin}</td><td class="py-2.5 px-2 text-xs font-semibold text-amber-700">${it.seller}</td><td class="py-2.5 px-2 font-medium">${it.title}</td><td class="py-2.5 px-2 text-right font-semibold text-slate-900">${formatBRL(it.amount)}</td></tr>`).join('')
+        : '<tr><td colspan="5" class="py-4 text-center text-slate-400">Nenhuma venda fechada neste mês.</td></tr>';
 
       return totalRev;
     }
@@ -758,7 +771,10 @@ window.addMaterialRow = addMaterialRow;
       const btn = e.target.querySelector('button[type="submit"]');
       btn.disabled = true;
       const client = document.getElementById('qs-client').value.trim();
-      const desc = document.getElementById('qs-desc').value.trim() + (client ? ` - Cliente: ${client}` : '');
+      const seller = document.getElementById('qs-seller').value.trim();
+      const desc = document.getElementById('qs-desc').value.trim()
+        + (client ? ` - Cliente: ${client}` : '')
+        + (seller ? ` | Vendedor: ${seller}` : '');
       const { error } = await sb.from('financial_transactions').insert({
         type: 'income',
         category: 'venda_direta',
@@ -866,7 +882,8 @@ window.addMaterialRow = addMaterialRow;
           if (ce) throw ce; custId = nc.id;
         } else { const sel = document.getElementById('order-customer-select'); custId = sel.value || null; custName = sel.options[sel.selectedIndex]?.dataset?.name || 'Cliente'; }
 
-        const { data: no, error: oe } = await sb.from('manufacturing_orders').insert({ customer_id: custId, customer_name: custName, product_description: document.getElementById('order-desc').value, details: document.getElementById('order-details').value, due_date: document.getElementById('order-due-date').value || null, status: document.getElementById('order-status').value, total_price: parseFloat(document.getElementById('order-total-price').value) || 0 }).select().single();
+        const { data: no, error: oe } = await sb.from('manufacturing_orders').insert({ customer_id: custId, customer_name: custName, seller_name: document.getElementById('order-seller')?.value.trim() || '',
+ product_description: document.getElementById('order-desc').value, details: document.getElementById('order-details').value, due_date: document.getElementById('order-due-date').value || null, status: document.getElementById('order-status').value, total_price: parseFloat(document.getElementById('order-total-price').value) || 0 }).select().single();
         if (oe) throw oe;
 
         for (const row of document.querySelectorAll('.material-row')) {
