@@ -95,6 +95,8 @@
           <button onclick="switchTab('orders')" id="tab-orders" class="px-3 py-1.5 rounded text-sm font-medium bg-amber-600 text-white">Pedidos</button>
           <button onclick="switchTab('stock')" id="tab-stock" class="px-3 py-1.5 rounded text-sm font-medium bg-slate-800 text-slate-300">Estoque</button>
           <button onclick="switchTab('finance')" id="tab-finance" class="owner-only hidden px-3 py-1.5 rounded text-sm font-medium bg-slate-800 text-slate-300">Financeiro</button>
+                    <button onclick="switchTab('sales')" id="tab-sales" class="owner-only hidden px-3 py-1.5 rounded text-sm font-medium bg-slate-800 text-slate-300">Vendas</button>
+
         </nav>
       </div>
       <button onclick="logout()" class="text-sm bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded">Sair</button>
@@ -182,6 +184,26 @@
             <button type="button" onclick="document.getElementById('fin-month-filter').value=''; loadFinanceData();" class="text-xs text-slate-500 hover:underline px-2">Ver tudo</button>
           </div>
         </div>
+        <div class="bg-white p-5 rounded-xl shadow-sm border space-y-4">
+          <div class="flex flex-wrap justify-between items-center gap-2">
+            <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wide">Dashboard Financeiro & Lucratividade do Mês</h3>
+            <span id="fin-profit-margin" class="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800">Margem: 0%</span>
+          </div>
+          <div class="space-y-3 text-xs">
+            <div>
+              <div class="flex justify-between mb-1"><span class="font-medium text-slate-600">Total Vendido (Pedidos Fechados + Vendas Diretas)</span><strong id="dash-sold-val" class="text-slate-900">R$ 0,00</strong></div>
+              <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden"><div id="bar-sold" class="bg-amber-500 h-full transition-all" style="width: 100%"></div></div>
+            </div>
+            <div>
+              <div class="flex justify-between mb-1"><span class="font-medium text-slate-600">Recebido em Caixa (Entradas Pagas)</span><strong id="dash-in-val" class="text-emerald-700">R$ 0,00</strong></div>
+              <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden"><div id="bar-in" class="bg-emerald-500 h-full transition-all" style="width: 0%"></div></div>
+            </div>
+            <div>
+              <div class="flex justify-between mb-1"><span class="font-medium text-slate-600">Gastos / Despesas do Mês</span><strong id="dash-out-val" class="text-red-600">R$ 0,00</strong></div>
+              <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden"><div id="bar-out" class="bg-red-500 h-full transition-all" style="width: 0%"></div></div>
+            </div>
+          </div>
+        </div>
 
         <div class="grid md:grid-cols-3 gap-4">
           <div class="bg-white p-5 rounded-xl shadow border-l-4 border-emerald-500"><span class="text-xs uppercase text-slate-500 font-semibold">Entradas</span><p id="fin-total-income" class="text-2xl font-bold text-emerald-600 mt-1">R$ 0,00</p></div>
@@ -210,6 +232,71 @@
           </div>
         </div>
       </section>
+            <section id="view-sales" class="hidden space-y-6">
+        <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-xl shadow-sm border">
+          <div>
+            <h2 class="text-lg font-bold text-slate-800">Relatório de Vendas do Mês</h2>
+            <p class="text-xs text-slate-500">Consolidado de pedidos fechados e vendas diretas integrados ao Financeiro</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <input type="month" id="sales-month-filter" onchange="loadSalesData()" class="border rounded-lg px-3 py-1.5 text-sm bg-slate-50">
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-4">
+          <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-amber-500">
+            <span class="text-xs font-bold text-slate-500 uppercase">Faturamento Vendido no Mês</span>
+            <p id="sales-total-revenue" class="text-2xl font-bold text-slate-900 mt-1">R$ 0,00</p>
+          </div>
+          <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-blue-500">
+            <span class="text-xs font-bold text-slate-500 uppercase">Qtd. de Vendas / Pedidos</span>
+            <p id="sales-total-count" class="text-2xl font-bold text-blue-600 mt-1">0</p>
+          </div>
+          <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-emerald-500">
+            <span class="text-xs font-bold text-slate-500 uppercase">Ticket Médio por Venda</span>
+            <p id="sales-avg-ticket" class="text-2xl font-bold text-emerald-600 mt-1">R$ 0,00</p>
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-6">
+          <div class="bg-white p-5 rounded-xl shadow-sm border h-fit">
+            <h3 class="font-bold text-slate-800 mb-1">Registrar Venda Rápida / Balcão</h3>
+            <p class="text-xs text-slate-500 mb-4">Lança automaticamente como receita no Financeiro</p>
+            <form id="quick-sale-form" class="space-y-3 text-sm">
+              <input type="text" id="qs-desc" placeholder="Ex: 4 Almofadas decorativas / Impermeabilização" required class="w-full border rounded-lg p-2">
+              <input type="text" id="qs-client" placeholder="Nome do Cliente (opcional)" class="w-full border rounded-lg p-2">
+              <div class="grid grid-cols-2 gap-2">
+                <input type="number" step="0.01" min="0.01" id="qs-amount" placeholder="Valor (R$)" required class="w-full border rounded-lg p-2">
+                <select id="qs-method" class="w-full border rounded-lg p-2 bg-white">
+                  <option value="pix">PIX</option>
+                  <option value="cartao">Cartão</option>
+                  <option value="dinheiro">Dinheiro</option>
+                </select>
+              </div>
+              <input type="date" id="qs-date" required class="w-full border rounded-lg p-2">
+              <button type="submit" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold py-2 rounded-lg">Concluir Venda</button>
+            </form>
+          </div>
+
+          <div class="md:col-span-2 bg-white p-5 rounded-xl shadow-sm border">
+            <h3 class="font-bold text-slate-800 mb-3">O que foi vendido no período</h3>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-sm">
+                <thead>
+                  <tr class="border-b text-xs uppercase text-slate-500">
+                    <th class="py-2 px-2">Data</th>
+                    <th class="py-2 px-2">Origem</th>
+                    <th class="py-2 px-2">Item / Serviço Vendido</th>
+                    <th class="py-2 px-2 text-right">Valor</th>
+                  </tr>
+                </thead>
+                <tbody id="sales-table-body" class="divide-y"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
     </main>
   </div>
 
@@ -340,6 +427,7 @@ window.addMaterialRow = addMaterialRow;
           window.renderOrdersTable = renderOrdersTable;
 
           window.deletePayment = deletePayment;
+    window.loadSalesData = loadSalesData;
 
 
 
@@ -605,28 +693,141 @@ window.addMaterialRow = addMaterialRow;
       grid.innerHTML = cards.join('');
     }
 
+       async function loadSalesData() {
+      const monthEl = document.getElementById('sales-month-filter');
+      if (monthEl && !monthEl.value) monthEl.value = new Date().toISOString().slice(0, 7);
+      const qsDate = document.getElementById('qs-date');
+      if (qsDate && !qsDate.value) qsDate.valueAsDate = new Date();
+
+      const monthVal = monthEl?.value || new Date().toISOString().slice(0, 7);
+      const [y, m] = monthVal.split('-');
+      const lastDay = new Date(Number(y), Number(m), 0).getDate();
+      const startStr = `${monthVal}-01`;
+      const endStr = `${monthVal}-${lastDay}`;
+
+      const { data: orders } = await sb.from('manufacturing_orders')
+        .select('*')
+        .neq('status', 'quote')
+        .neq('status', 'cancelled')
+        .gte('created_at', `${startStr}T00:00:00`)
+        .lte('created_at', `${endStr}T23:59:59`);
+
+      const { data: directSales } = await sb.from('financial_transactions')
+        .select('*')
+        .eq('type', 'income')
+        .eq('category', 'venda_direta')
+        .gte('transaction_date', startStr)
+        .lte('transaction_date', endStr);
+
+      const items = [
+        ...(orders || []).map(o => ({
+          date: o.created_at.slice(0, 10),
+          origin: `OS #${o.order_number}`,
+          title: `${o.product_description} (${o.customer_name})`,
+          amount: Number(o.total_price || 0)
+        })),
+        ...(directSales || []).map(s => ({
+          date: s.transaction_date,
+          origin: 'Venda Rápida',
+          title: s.description,
+          amount: Number(s.amount || 0)
+        }))
+      ].sort((a, b) => b.date.localeCompare(a.date));
+
+      const totalRev = items.reduce((acc, it) => acc + it.amount, 0);
+      const count = items.length;
+      const avg = count > 0 ? totalRev / count : 0;
+
+      document.getElementById('sales-total-revenue').textContent = formatBRL(totalRev);
+      document.getElementById('sales-total-count').textContent = count;
+      document.getElementById('sales-avg-ticket').textContent = formatBRL(avg);
+
+      document.getElementById('sales-table-body').innerHTML = items.length
+        ? items.map(it => `<tr><td class="py-2.5 px-2">${new Date(it.date + 'T00:00:00').toLocaleDateString('pt-BR')}</td><td class="py-2.5 px-2 font-mono text-xs">${it.origin}</td><td class="py-2.5 px-2 font-medium">${it.title}</td><td class="py-2.5 px-2 text-right font-semibold text-slate-900">${formatBRL(it.amount)}</td></tr>`).join('')
+        : '<tr><td colspan="4" class="py-4 text-center text-slate-400">Nenhuma venda fechada neste mês.</td></tr>';
+
+      return totalRev;
+    }
+
+    document.getElementById('quick-sale-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = e.target.querySelector('button[type="submit"]');
+      btn.disabled = true;
+      const client = document.getElementById('qs-client').value.trim();
+      const desc = document.getElementById('qs-desc').value.trim() + (client ? ` - Cliente: ${client}` : '');
+      const { error } = await sb.from('financial_transactions').insert({
+        type: 'income',
+        category: 'venda_direta',
+        description: desc,
+        amount: parseFloat(document.getElementById('qs-amount').value),
+        payment_method: document.getElementById('qs-method').value,
+        transaction_date: document.getElementById('qs-date').value
+      });
+      btn.disabled = false;
+      if (error) return alert('Erro ao registrar venda: ' + error.message);
+      e.target.reset();
+      loadSalesData();
+    });
+
     async function loadFinanceData() {
-           const monthVal = document.getElementById('fin-month-filter')?.value;
+      const monthFilter = document.getElementById('fin-month-filter');
+      if (monthFilter && !monthFilter.value) monthFilter.value = new Date().toISOString().slice(0, 7);
+      const monthVal = monthFilter?.value;
+
       let query = sb.from('financial_transactions').select('*').order('transaction_date', { ascending: false });
+      let totalSoldMonth = 0;
+
       if (monthVal) {
         const [y, m] = monthVal.split('-');
         const lastDay = new Date(Number(y), Number(m), 0).getDate();
-        query = query.gte('transaction_date', `${monthVal}-01`).lte('transaction_date', `${monthVal}-${lastDay}`);
+        const startStr = `${monthVal}-01`;
+        const endStr = `${monthVal}-${lastDay}`;
+        query = query.gte('transaction_date', startStr).lte('transaction_date', endStr);
+
+        const { data: ordersMonth } = await sb.from('manufacturing_orders')
+          .select('total_price')
+          .neq('status', 'quote')
+          .neq('status', 'cancelled')
+          .gte('created_at', `${startStr}T00:00:00`)
+          .lte('created_at', `${endStr}T23:59:59`);
+        const { data: directMonth } = await sb.from('financial_transactions')
+          .select('amount')
+          .eq('type', 'income')
+          .eq('category', 'venda_direta')
+          .gte('transaction_date', startStr)
+          .lte('transaction_date', endStr);
+
+        totalSoldMonth = (ordersMonth || []).reduce((a, b) => a + Number(b.total_price || 0), 0)
+          + (directMonth || []).reduce((a, b) => a + Number(b.amount || 0), 0);
       } else {
         query = query.limit(100);
       }
-      const { data: txs } = await query;
 
+      const { data: txs } = await query;
       let inc = 0, exp = 0;
       document.getElementById('finance-table-body').innerHTML = (txs || []).map(t => {
-        const v = Number(t.amount); if (t.type === 'income') inc += v; else exp += v;
-              return `<tr><td class="py-2 px-2">${t.transaction_date ? new Date(t.transaction_date + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}</td><td class="py-2 px-2">${t.description}</td><td class="py-2 px-2">${t.category}</td><td class="py-2 px-2 text-right font-semibold ${t.type==='income'?'text-emerald-600':'text-red-600'}">${formatBRL(v)}</td></tr>`;
-
+        const v = Number(t.amount);
+        if (t.type === 'income') inc += v; else exp += v;
+        return `<tr><td class="py-2 px-2">${t.transaction_date ? new Date(t.transaction_date + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}</td><td class="py-2 px-2">${t.description}</td><td class="py-2 px-2">${t.category}</td><td class="py-2 px-2 text-right font-semibold ${t.type==='income'?'text-emerald-600':'text-red-600'}">${formatBRL(v)}</td></tr>`;
       }).join('');
+
+      const netProfit = inc - exp;
       document.getElementById('fin-total-income').textContent = formatBRL(inc);
       document.getElementById('fin-total-expense').textContent = formatBRL(exp);
-      document.getElementById('fin-net-balance').textContent = formatBRL(inc - exp);
+      document.getElementById('fin-net-balance').textContent = formatBRL(netProfit);
+
+      const baseMax = Math.max(totalSoldMonth, inc, exp, 1);
+      document.getElementById('dash-sold-val').textContent = formatBRL(totalSoldMonth || inc);
+      document.getElementById('dash-in-val').textContent = formatBRL(inc);
+      document.getElementById('dash-out-val').textContent = formatBRL(exp);
+      document.getElementById('bar-sold').style.width = `${Math.min(100, ((totalSoldMonth || inc) / baseMax) * 100)}%`;
+      document.getElementById('bar-in').style.width = `${Math.min(100, (inc / baseMax) * 100)}%`;
+      document.getElementById('bar-out').style.width = `${Math.min(100, (exp / baseMax) * 100)}%`;
+
+      const margin = inc > 0 ? Math.round((netProfit / inc) * 100) : 0;
+      document.getElementById('fin-profit-margin').textContent = `Margem Líquida: ${margin}%`;
     }
+
 
     document.getElementById('expense-form')?.addEventListener('submit', async (e) => {
       e.preventDefault();
