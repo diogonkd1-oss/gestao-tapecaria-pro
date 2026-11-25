@@ -403,7 +403,7 @@
 
   <!-- MODAL: DETALHES, EDIÇÃO, EXCLUSÃO E PDF -->
   <div id="order-details-modal" class="hidden fixed inset-0 bg-slate-900/60 flex items-center justify-center p-4 z-50 overflow-y-auto">
-    <div class="bg-white rounded-xl shadow-xl w-full max-w-3xl p-6 my-8 space-y-5">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-5xl p-6 my-8 space-y-5">
       <div class="flex flex-wrap justify-between items-start border-b pb-3 gap-2">
         <div><h3 id="det-title" class="text-lg font-bold text-slate-900">Pedido #</h3><p id="det-subtitle" class="text-sm text-slate-500"></p></div>
         <div class="flex items-center gap-2">
@@ -420,12 +420,37 @@
           <div><label class="block font-medium mb-1">Cliente</label><input type="text" id="edit-cust-name" required class="w-full border rounded-lg p-2 bg-white"></div>
           <div><label class="block font-medium mb-1">Entrega</label><input type="date" id="edit-due-date" class="w-full border rounded-lg p-2 bg-white"></div>
         </div>
-        <div class="grid md:grid-cols-3 gap-3">
-          <div class="md:col-span-2"><label class="block font-medium mb-1">Serviço</label><input type="text" id="edit-desc" required class="w-full border rounded-lg p-2 bg-white"></div>
-          <div><label class="block font-medium mb-1">Valor Total (R$)</label><input type="number" step="0.01" min="0" id="edit-total-price" required class="w-full border rounded-lg p-2 bg-white"></div>
-        </div>
-        <div><label class="block font-medium mb-1">Detalhes Técnicos</label><textarea id="edit-details" rows="2" class="w-full border rounded-lg p-2 bg-white"></textarea></div>
-                <div><label class="block font-medium mb-1">Forma de Pagamento (sai no PDF)</label><input type="text" id="edit-payment-terms" placeholder="Ex: Entrada R$ 2.000 + 6x no cartão" class="w-full border rounded-lg p-2 bg-white"></div>
+                 <div class="bg-white p-3.5 rounded-lg border border-amber-200 space-y-2.5">
+            <div class="flex flex-wrap justify-between items-center gap-2">
+              <label class="text-xs font-bold uppercase text-slate-700">Itens / Serviços do Pedido e Valores Unitários</label>
+              <button type="button" onclick="addEditItemRow()" class="text-xs bg-amber-100 hover:bg-amber-200 text-amber-900 font-semibold px-3 py-1 rounded">+ Adicionar Item</button>
+            </div>
+            <div class="grid grid-cols-12 gap-2 text-[11px] font-bold uppercase text-slate-400 px-1">
+              <span class="col-span-6">Descrição do Item / Serviço</span>
+              <span class="col-span-2 text-center">Qtd.</span>
+              <span class="col-span-3 text-right">Valor Unit. (R$)</span>
+              <span class="col-span-1"></span>
+            </div>
+            <div id="edit-items-list" class="space-y-2"></div>
+            <input type="hidden" id="edit-desc">
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-3">
+            <div>
+              <label class="block font-medium mb-1">Forma de Pagamento (sai no PDF)</label>
+              <input type="text" id="edit-payment-terms" placeholder="Ex: Entrada R$ 2.000 + 6x no cartão" class="w-full border rounded-lg p-2.5 bg-white">
+            </div>
+            <div>
+              <label class="block font-bold text-slate-800 mb-1">Soma Total dos Valores (R$)</label>
+              <input type="number" step="0.01" min="0" id="edit-total-price" required class="w-full border-2 border-amber-400 rounded-lg p-2.5 text-base font-bold text-slate-900 bg-amber-50/50">
+            </div>
+          </div>
+
+          <div>
+            <label class="block font-medium mb-1">Detalhes Técnicos</label>
+            <textarea id="edit-details" rows="3" class="w-full border rounded-lg p-2 bg-white"></textarea>
+          </div>
+
 
         <div class="flex justify-end gap-2">
           <button type="button" onclick="toggleEditOrder()" class="px-3 py-1.5 rounded border bg-white">Cancelar</button>
@@ -487,6 +512,8 @@ window.addMaterialRow = addMaterialRow;
     window.loadSalesData = loadSalesData;
     window.payBoleto = payBoleto;
     window.deleteBoleto = deleteBoleto;
+    window.addEditItemRow = addEditItemRow;
+    window.recalcEditTotal = recalcEditTotal;
 
 
 
@@ -694,6 +721,60 @@ window.addMaterialRow = addMaterialRow;
     }
 
     function closeOrderDetailsModal() { document.getElementById('order-details-modal').classList.add('hidden'); document.getElementById('edit-order-form').classList.add('hidden'); activeOrderId = null; }
+    function addEditItemRow(desc = '', qty = 1, unitPrice = '') {
+      const container = document.getElementById('edit-items-list');
+      if (!container) return;
+      const row = document.createElement('div');
+      row.className = 'grid grid-cols-12 gap-2 items-center edit-item-row';
+      row.innerHTML = `
+        <input type="text" placeholder="Descrição do serviço / peça" value="${desc}" oninput="recalcEditTotal()" class="col-span-6 border rounded-lg p-2 text-sm edit-item-desc bg-white">
+        <input type="number" min="1" step="1" placeholder="Qtd" value="${qty}" oninput="recalcEditTotal()" class="col-span-2 border rounded-lg p-2 text-sm text-center edit-item-qty bg-white">
+        <input type="number" min="0" step="0.01" placeholder="Unit. (R$)" value="${unitPrice}" oninput="recalcEditTotal()" class="col-span-3 border rounded-lg p-2 text-sm text-right edit-item-price bg-white">
+        <button type="button" onclick="this.parentElement.remove(); recalcEditTotal();" class="col-span-1 text-red-500 hover:text-red-700 font-bold text-center">✕</button>
+      `;
+      container.appendChild(row);
+    }
+
+    function recalcEditTotal() {
+      const rows = document.querySelectorAll('.edit-item-row');
+      let sum = 0;
+      const descParts = [];
+      rows.forEach(r => {
+        const d = r.querySelector('.edit-item-desc')?.value.trim() || '';
+        const q = parseFloat(r.querySelector('.edit-item-qty')?.value || 1) || 1;
+        const p = parseFloat(r.querySelector('.edit-item-price')?.value || 0) || 0;
+        if (d) {
+          descParts.push(p > 0 ? `${q}x ${d} (${formatBRL(p)})` : (q > 1 ? `${q}x ${d}` : d));
+        }
+        sum += q * p;
+      });
+      if (descParts.length > 0) {
+        document.getElementById('edit-desc').value = descParts.join(' + ');
+      }
+      if (sum > 0) {
+        document.getElementById('edit-total-price').value = sum.toFixed(2);
+      }
+    }
+
+    function renderEditItemsFromOrder(fullDesc, totalVal) {
+      const container = document.getElementById('edit-items-list');
+      if (!container) return;
+      container.innerHTML = '';
+      const parts = (fullDesc || '').split(' + ').filter(Boolean);
+      if (parts.length <= 1) {
+        addEditItemRow(fullDesc || '', 1, Number(totalVal || 0) > 0 ? Number(totalVal).toFixed(2) : '');
+      } else {
+        parts.forEach(part => {
+          const match = part.match(/^(\d+)x\s+(.+?)(?:\s+\(R\$\s*([\d.,]+)\))?$/);
+          if (match) {
+            const rawPrice = match[3] ? match[3].replace(/\./g, '').replace(',', '.') : '';
+            addEditItemRow(match[2], Number(match[1]), rawPrice);
+          } else {
+            addEditItemRow(part, 1, '');
+          }
+        });
+      }
+    }
 
     function toggleEditOrder() {
       const form = document.getElementById('edit-order-form');
@@ -706,11 +787,15 @@ window.addMaterialRow = addMaterialRow;
         document.getElementById('edit-desc').value = activeOrderFull.product_description || '';
         document.getElementById('edit-total-price').value = activeOrderFull.total_price || 0;
         document.getElementById('edit-details').value = activeOrderFull.details || '';
+                renderEditItemsFromOrder(activeOrderFull.product_description, activeOrderFull.total_price);
+
       }
     }
 
     document.getElementById('edit-order-form')?.addEventListener('submit', async (e) => {
       e.preventDefault();
+            recalcEditTotal();
+
       const { error } = await sb.from('manufacturing_orders').update({
         customer_name: document.getElementById('edit-cust-name').value.trim(),
         due_date: document.getElementById('edit-due-date').value || null,
