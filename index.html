@@ -761,9 +761,22 @@ window.addMaterialRow = addMaterialRow;
       if (!container) return;
       container.innerHTML = '';
       const parts = (fullDesc || '').split(' + ').filter(Boolean);
-      if (parts.length <= 1) {
-        addEditItemRow(fullDesc || '', 1, Number(totalVal || 0) > 0 ? Number(totalVal).toFixed(2) : '');
-      } else {
+           if (parts.length === 0) {
+        addEditItemRow('', 1, '');
+        return;
+      }
+      parts.forEach(part => {
+        const match = part.match(/^(?:(\d+)x\s+)?(.+?)(?:\s+\(R\$\s*([\d.,]+)\))?$/);
+        if (match) {
+          const qty = match[1] ? Number(match[1]) : 1;
+          const name = match[2];
+          const rawPrice = match[3] ? match[3].replace(/\./g, '').replace(',', '.') : (parts.length === 1 && Number(totalVal || 0) > 0 ? Number(totalVal).toFixed(2) : '');
+          addEditItemRow(name, qty, rawPrice);
+        } else {
+          addEditItemRow(part, 1, '');
+        }
+      });
+
         parts.forEach(part => {
           const match = part.match(/^(\d+)x\s+(.+?)(?:\s+\(R\$\s*([\d.,]+)\))?$/);
           if (match) {
@@ -808,7 +821,7 @@ window.addMaterialRow = addMaterialRow;
       if (error) return alert('Erro ao salvar: ' + error.message);
       document.getElementById('edit-order-form').classList.add('hidden');
       await loadDashboardData();
-      openOrderDetails(activeOrderId);
+      await openOrderDetails(activeOrderId);
     });
 
     async function deleteActiveOrder() {
