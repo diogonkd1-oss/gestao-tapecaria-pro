@@ -777,16 +777,8 @@ window.addMaterialRow = addMaterialRow;
         }
       });
 
-        parts.forEach(part => {
-          const match = part.match(/^(\d+)x\s+(.+?)(?:\s+\(R\$\s*([\d.,]+)\))?$/);
-          if (match) {
-            const rawPrice = match[3] ? match[3].replace(/\./g, '').replace(',', '.') : '';
-            addEditItemRow(match[2], Number(match[1]), rawPrice);
-          } else {
-            addEditItemRow(part, 1, '');
-          }
-        });
-      }
+       
+    
     }
 
     function toggleEditOrder() {
