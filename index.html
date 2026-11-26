@@ -1219,7 +1219,8 @@ window.openOrderDetails = openOrderDetails;
 
     function openNewOrderModal() {
       const sel = document.getElementById('order-customer-select');
-      sel.innerHTML = cachedCustomers.length ? cachedCustomers.map(c => `<option value="${c.id}" data-name="${c.full_name}">${c.full_name}</option>`).join('') : '<option value="">Nenhum cliente</option>';
+           sel.innerHTML = '<option value="">Selecione um cliente...</option>' + (cachedCustomers.length ? cachedCustomers.map(c => `<option value="${c.id}" data-name="${c.full_name}">${c.full_name}</option>`).join('') : '');
+
       if (cachedCustomers.length === 0) { document.getElementById('is-new-customer').checked = true; toggleCustomerMode(); }
       document.getElementById('order-materials-list').innerHTML = '';
             const newItemsBox = document.getElementById('new-items-list');
