@@ -427,7 +427,8 @@
   </div>
 
   <!-- MODAL: DETALHES, EDIÇÃO, EXCLUSÃO E PDF -->
-  <div id="order-details-modal" class="hidden fixed inset-0 bg-slate-900/60 flex items-center justify-center p-4 z-50 overflow-y-auto">
+  <div id="order-details-modal" style="display: none;" class="fixed inset-0 bg-slate-900/60 flex items-center justify-center p-4 z-50 overflow-y-auto">
+
     <div class="bg-white rounded-xl shadow-xl w-full max-w-5xl p-6 my-8 space-y-5">
       <div class="flex flex-wrap justify-between items-start border-b pb-3 gap-2">
         <div><h3 id="det-title" class="text-lg font-bold text-slate-900">Pedido #</h3><p id="det-subtitle" class="text-sm text-slate-500"></p></div>
@@ -682,7 +683,10 @@ window.openOrderDetails = openOrderDetails;
         document.getElementById('det-balance-due').textContent = formatBRL(summary.balance_due ?? fullOrder.total_price ?? 0);
         loadOrderProfit(id, summary.total_price ?? fullOrder.total_price ?? 0);
       }
-      document.getElementById('order-details-modal').classList.remove('hidden');
+           const detModal = document.getElementById('order-details-modal');
+      detModal.classList.remove('hidden');
+      detModal.style.display = 'flex';
+
       loadOrderPhotos(id);
       if (currentUserRole === 'owner') loadOrderPayments(id);
     }
@@ -753,7 +757,8 @@ window.openOrderDetails = openOrderDetails;
       window.print();
     }
 
-    function closeOrderDetailsModal() { document.getElementById('order-details-modal').classList.add('hidden'); document.getElementById('edit-order-form').classList.add('hidden'); activeOrderId = null; }
+      function closeOrderDetailsModal() { const detModal = document.getElementById('order-details-modal'); detModal.classList.add('hidden'); detModal.style.display = 'none'; document.getElementById('edit-order-form').classList.add('hidden'); }
+
         function parseMoneyBR(val) {
       if (typeof val === 'number') return val;
       let s = String(val || '').trim().replace(/[^\d.,-]/g, '');
