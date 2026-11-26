@@ -669,22 +669,24 @@ window.openOrderDetails = openOrderDetails;
 
     async function openOrderDetails(id) {
       activeOrderId = id;
-      const summary = cachedOrders.find(o => (o.order_id || o.id) === id);
-      const { data: fullOrder } = await sb.from('manufacturing_orders').select('*').eq('id', id).single();
+           const summary = cachedOrders.find(o => (o.order_id || o.id) === id) || {};
+      const { data: fullOrder, error } = await sb.from('manufacturing_orders').select('*').eq('id', id).maybeSingle();
+      if (error || !fullOrder) return alert('Não foi possível carregar os detalhes: ' + (error?.message || 'Pedido não encontrado'));
       activeOrderFull = fullOrder;
       document.getElementById('det-title').textContent = `Pedido #${fullOrder.order_number} - ${fullOrder.customer_name}`;
-      document.getElementById('det-subtitle').textContent = fullOrder.product_description;
+      document.getElementById('det-subtitle').textContent = fullOrder.product_description || '';
       document.getElementById('det-notes').textContent = fullOrder.details || 'Sem observações.';
-      if (currentUserRole === 'owner' && summary) {
-        document.getElementById('det-total-price').textContent = formatBRL(summary.total_price);
-        document.getElementById('det-total-paid').textContent = formatBRL(summary.total_paid);
-        document.getElementById('det-balance-due').textContent = formatBRL(summary.balance_due);
-                loadOrderProfit(id, summary.total_price);
-
+      if (currentUserRole === 'owner') {
+        document.getElementById('det-total-price').textContent = formatBRL(summary.total_price ?? fullOrder.total_price ?? 0);
+        document.getElementById('det-total-paid').textContent = formatBRL(summary.total_paid ?? 0);
+        document.getElementById('det-balance-due').textContent = formatBRL(summary.balance_due ?? fullOrder.total_price ?? 0);
+        loadOrderProfit(id, summary.total_price ?? fullOrder.total_price ?? 0);
       }
       document.getElementById('order-details-modal').classList.remove('hidden');
       loadOrderPhotos(id);
-            if (currentUserRole === 'owner') loadOrderPayments(id);
+      if (currentUserRole === 'owner') loadOrderPayments(id);
+    }
+
           async function loadOrderProfit(orderId, totalPrice) {
       const profitEl = document.getElementById('det-profit-info');
       if (!profitEl) return;
